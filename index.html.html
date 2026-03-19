@@ -1,0 +1,3746 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SELAPHUM SMART KPI (ระบบบริหารตัวชี้วัดแผนยุทธศาสตร์สุขภาพอัจฉริยะ อำเภอเสลภูมิ)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+            min-height: 100vh;
+            color: #334155;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            box-shadow: 0 10px 40px rgba(14, 165, 233, 0.3);
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-icon {
+            width: 56px;
+            height: 56px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            background: rgba(255,255,255,0.1);
+            padding: 6px;
+            border-radius: 12px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.7);
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #0ea5e9;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+        }
+
+        .stat-card.passed {
+            border-left: 4px solid #10b981;
+            background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%);
+        }
+
+        .stat-card.failed {
+            border-left: 4px solid #ef4444;
+            background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
+        }
+
+        .stat-card.pending {
+            border-left: 4px solid #f59e0b;
+            background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .stat-icon {
+            font-size: 24px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .stat-card.passed .stat-value { color: #059669; }
+        .stat-card.failed .stat-value { color: #dc2626; }
+        .stat-card.pending .stat-value { color: #d97706; }
+
+        /* Charts Section */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #1e293b;
+        }
+
+        .chart-title::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: linear-gradient(135deg, #0284c7, #0ea5e9);
+            border-radius: 50%;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .control-label {
+            display: block;
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        select, input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px 16px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            color: #334155;
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15);
+        }
+
+        /* Data Entry Form */
+        .entry-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .entry-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(14, 165, 233, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* KPI Table */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        th {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 14px 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 13px;
+            color: #475569;
+        }
+
+        tr:hover {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        }
+
+        .kpi-name {
+            max-width: 300px;
+        }
+
+        .kpi-name-text {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            color: #1e293b;
+        }
+
+        .strategy-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .strategy-1 { background: linear-gradient(135deg, #e0f2fe, #bae6fd); color: #0369a1; }
+        .strategy-2 { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #047857; }
+        .strategy-3 { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #b45309; }
+        .strategy-4 { background: linear-gradient(135deg, #ede9fe, #ddd6fe); color: #6d28d9; }
+        .strategy-5 { background: linear-gradient(135deg, #fce7f3, #fbcfe8); color: #be185d; }
+
+        .value-input {
+            width: 80px;
+            padding: 8px;
+            text-align: center;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            color: #334155;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .value-input:focus {
+            border-color: #0ea5e9;
+            outline: none;
+            background: white;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-passed {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            color: #047857;
+        }
+
+        .status-failed {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            color: #b91c1c;
+        }
+
+        .status-pending {
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            color: #64748b;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-fill.good { background: linear-gradient(90deg, #10b981, #34d399); }
+        .progress-fill.warning { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .progress-fill.danger { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 24px;
+        }
+
+        .modal-close {
+            background: #f1f5f9;
+            border: none;
+            color: #64748b;
+            font-size: 24px;
+            cursor: pointer;
+            line-height: 1;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 16px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 40px rgba(16, 185, 129, 0.4);
+            z-index: 1001;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.show {
+            display: flex;
+        }
+
+        .toast.error {
+            background: #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Export Section */
+        .export-section {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        /* Strategy Summary */
+        .strategy-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .strategy-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 14px;
+            border-left: 4px solid;
+        }
+
+        .strategy-item-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .strategy-item-name {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .strategy-item-count {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .strategy-item-score {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        /* Month Grid */
+        .month-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .month-cell {
+            text-align: center;
+            padding: 8px 4px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        .month-cell-label {
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .month-cell-value {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .month-cell-value.good { color: #059669; }
+        .month-cell-value.bad { color: #dc2626; }
+        .month-cell-value.empty { color: #94a3b8; }
+
+        /* KPI Entry Cards */
+        .kpi-entry-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .kpi-entry-card {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+        }
+
+        .kpi-entry-card:hover {
+            border-color: #0ea5e9;
+            box-shadow: 0 8px 30px rgba(14, 165, 233, 0.15);
+        }
+
+        .kpi-entry-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .kpi-entry-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .kpi-entry-number {
+            background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .kpi-entry-info {
+            flex: 1;
+        }
+
+        .kpi-entry-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        .kpi-entry-meta {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .kpi-entry-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .kpi-entry-target {
+            background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+            color: #0369a1;
+            padding: 8px 16px;
+            border-radius: 12px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .kpi-entry-target-label {
+            font-size: 11px;
+            color: #0284c7;
+            margin-bottom: 4px;
+        }
+
+        .kpi-entry-target-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .kpi-entry-body {
+            padding: 20px;
+            background: white;
+        }
+
+        .kpi-entry-months {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+        }
+
+        @media (max-width: 900px) {
+            .kpi-entry-months {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .kpi-entry-months {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .kpi-month-input-group {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+
+        .kpi-month-input-group:focus-within {
+            border-color: #0ea5e9;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+        }
+
+        .kpi-month-input-group.has-value.passed {
+            border-color: #10b981;
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+        }
+
+        .kpi-month-input-group.has-value.failed {
+            border-color: #ef4444;
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+        }
+
+        .kpi-month-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .kpi-month-input {
+            width: 100%;
+            padding: 8px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            color: #1e293b;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            font-family: inherit;
+        }
+
+        .kpi-month-input:focus {
+            outline: none;
+            border-color: #0ea5e9;
+        }
+
+        .kpi-month-status {
+            font-size: 11px;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+
+        .kpi-month-status.passed { color: #059669; }
+        .kpi-month-status.failed { color: #dc2626; }
+        .kpi-month-status.empty { color: #94a3b8; }
+
+        .kpi-entry-footer {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .kpi-entry-summary {
+            display: flex;
+            gap: 24px;
+            font-size: 13px;
+        }
+
+        .kpi-entry-summary-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .kpi-entry-summary-label {
+            color: #64748b;
+        }
+
+        .kpi-entry-summary-value {
+            font-weight: 600;
+        }
+
+        .kpi-entry-summary-value.good { color: #059669; }
+        .kpi-entry-summary-value.warning { color: #d97706; }
+        .kpi-entry-summary-value.bad { color: #dc2626; }
+
+        /* Edit Button */
+        .btn-edit-kpi {
+            background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+        }
+
+        .btn-edit-kpi:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(14, 165, 233, 0.4);
+        }
+
+        /* Highlight animation */
+        @keyframes highlightCard {
+            0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7); }
+            50% { box-shadow: 0 0 30px 10px rgba(14, 165, 233, 0.3); }
+            100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); }
+        }
+
+        .kpi-entry-card.highlight {
+            animation: highlightCard 2s ease;
+        }
+
+        /* AI Analysis Section */
+        .ai-analysis-options {
+            margin-top: 16px;
+        }
+
+        .ai-option-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .ai-option-card {
+            background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+            border: 2px solid #c4b5fd;
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .ai-option-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.2);
+            border-color: #8b5cf6;
+        }
+
+        .ai-option-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .ai-option-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #5b21b6;
+            margin-bottom: 8px;
+        }
+
+        .ai-option-desc {
+            font-size: 12px;
+            color: #7c3aed;
+            line-height: 1.5;
+        }
+
+        .btn-ai-analyze {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        .btn-ai-analyze:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+        }
+
+        /* CARD Preview Styles */
+        .card-preview {
+            background: white;
+            color: #1e293b;
+            padding: 32px;
+            border-radius: 12px;
+            font-family: 'Sarabun', sans-serif;
+        }
+
+        .card-preview h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e40af;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .card-preview h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e40af;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .card-preview h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 20px 0 12px 0;
+            padding-bottom: 4px;
+            border-bottom: 2px solid #3b82f6;
+        }
+
+        .card-preview table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 13px;
+        }
+
+        .card-preview th, .card-preview td {
+            border: 1px solid #cbd5e1;
+            padding: 8px 12px;
+            text-align: center;
+        }
+
+        .card-preview th {
+            background: #e0f2fe;
+            font-weight: 600;
+            color: #0369a1;
+        }
+
+        .card-preview .six-blocks-table th {
+            background: #dbeafe;
+            text-align: left;
+            width: 30%;
+        }
+
+        .card-preview .six-blocks-table td {
+            text-align: left;
+            background: #f8fafc;
+            color: #64748b;
+            font-style: italic;
+        }
+
+        .card-preview .result-pass {
+            color: #16a34a;
+            font-weight: 600;
+        }
+
+        .card-preview .result-fail {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .card-preview .text-area {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px;
+            min-height: 60px;
+            color: #64748b;
+            font-style: italic;
+        }
+
+        .card-btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-card-action {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        .btn-card-ai {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            color: white;
+        }
+
+        .btn-card-word {
+            background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+            color: white;
+        }
+
+        .btn-card-action:hover {
+            transform: scale(1.05);
+        }
+
+        /* CARD Form Styles */
+        .card-form-container {
+            background: white;
+            color: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .card-form-title {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            padding: 24px;
+            text-align: center;
+        }
+
+        .card-form-title h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            margin: 0 0 8px 0;
+        }
+
+        .card-form-title h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #bfdbfe;
+            margin: 0;
+        }
+
+        .card-kpi-info {
+            padding: 16px 24px;
+            background: #eff6ff;
+            border-bottom: 1px solid #dbeafe;
+        }
+
+        .card-kpi-info h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1e40af;
+            margin: 0 0 8px 0;
+        }
+
+        .card-kpi-info p {
+            font-size: 13px;
+            color: #64748b;
+            margin: 0;
+        }
+
+        .card-section {
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .card-section-header {
+            background: linear-gradient(135deg, #0369a1 0%, #0ea5e9 100%);
+            color: white;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .card-section-body {
+            padding: 20px 24px;
+        }
+
+        .card-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .card-table th, .card-table td {
+            border: 1px solid #cbd5e1;
+            padding: 10px 12px;
+            text-align: center;
+        }
+
+        .card-table th {
+            background: #e0f2fe;
+            font-weight: 600;
+            color: #0369a1;
+        }
+
+        .card-table.six-blocks th {
+            background: #dbeafe;
+            text-align: left;
+            width: 30%;
+            vertical-align: top;
+            color: #1e40af;
+            font-size: 12px;
+        }
+
+        .card-table.six-blocks th span {
+            font-weight: 400;
+            color: #64748b;
+        }
+
+        .card-table.six-blocks td {
+            padding: 0;
+        }
+
+        .card-table.result-table td:last-child {
+            font-weight: 600;
+        }
+
+        .card-subsection-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin: 20px 0 12px 0;
+            font-size: 14px;
+        }
+
+        .card-input-small {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 13px;
+            text-align: center;
+            font-family: inherit;
+            background: #f8fafc;
+        }
+
+        .card-input-small:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            background: white;
+        }
+
+        .card-textarea {
+            width: 100%;
+            min-height: 60px;
+            padding: 10px;
+            border: none;
+            font-size: 13px;
+            font-family: inherit;
+            resize: vertical;
+            background: #f8fafc;
+        }
+
+        .card-textarea:focus {
+            outline: none;
+            background: #eff6ff;
+        }
+
+        .card-textarea-large {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            resize: vertical;
+            background: #f8fafc;
+        }
+
+        .card-textarea-large:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            background: white;
+        }
+
+        .card-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            background: #f8fafc;
+        }
+
+        .card-input:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            background: white;
+        }
+
+        .card-reporter-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .card-reporter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card-reporter-item label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+
+        .card-actions {
+            padding: 20px 24px;
+            background: #f8fafc;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .card-note {
+            padding: 16px 24px;
+            background: #fefce8;
+            color: #854d0e;
+            font-size: 13px;
+            border-top: 1px solid #fde047;
+        }
+
+        .result-pass {
+            color: #16a34a !important;
+            background: #dcfce7 !important;
+        }
+
+        .result-fail {
+            color: #dc2626 !important;
+            background: #fee2e2 !important;
+        }
+
+        .result-pending {
+            color: #64748b !important;
+            background: #f1f5f9 !important;
+        }
+
+        /* CARD Summary Grid */
+        .card-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .card-summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .card-summary-item {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #475569;
+        }
+
+        .card-summary-item.completed {
+            border-color: #10b981;
+            background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+        }
+
+        .card-summary-item.pending {
+            border-color: #f59e0b;
+            background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+        }
+
+        .card-summary-item.progress {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
+        }
+
+        .card-summary-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .card-summary-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .card-summary-label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .card-status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .card-status-completed {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .card-status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-title">
+                <div class="header-icon">📊</div>
+                <div>
+                    <h1>SELAPHUM SMART KPI (ระบบบริหารตัวชี้วัดแผนยุทธศาสตร์สุขภาพอัจฉริยะ อำเภอเสลภูมิ)</h1>
+                    <p>ปีงบประมาณ 2569</p>
+                </div>
+            </div>
+            
+            <!-- Sync Status & Controls -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div id="syncIndicator" style="padding: 6px 12px; background: rgba(255,255,255,0.2); border-radius: 8px;">
+                    <span style="color: #94a3b8; font-size: 12px;">💾 Offline Mode</span>
+                </div>
+                <button onclick="syncAllToGoogleSheets()" class="btn btn-success" style="padding: 8px 16px; font-size: 13px;" title="Sync ข้อมูลทั้งหมดไป Google Sheets">
+                    ☁️ Sync to Sheets
+                </button>
+                <button onclick="loadFromGoogleSheets().then(() => { updateDashboard(); renderEntryList(); renderReportTable(); })" class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);" title="โหลดข้อมูลจาก Google Sheets">
+                    ⬇️ Load from Sheets
+                </button>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('dashboard')">📈 Dashboard</button>
+                <button class="tab-btn" onclick="switchTab('entry')">📝 บันทึกผลงาน</button>
+                <button class="tab-btn" onclick="switchTab('report')">📋 รายงาน</button>
+                <button class="tab-btn" onclick="switchTab('card')">📑 CARD ตรวจราชการ</button>
+            </div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="tab-dashboard" class="tab-content active">
+            <!-- Controls -->
+            <div class="controls">
+                <div class="control-group">
+                    <label class="control-label">เลือกเดือน</label>
+                    <select id="dashMonth" onchange="updateDashboard()">
+                        <option value="0">ตุลาคม 2568</option>
+                        <option value="1">พฤศจิกายน 2568</option>
+                        <option value="2">ธันวาคม 2568</option>
+                        <option value="3">มกราคม 2569</option>
+                        <option value="4">กุมภาพันธ์ 2569</option>
+                        <option value="5">มีนาคม 2569</option>
+                        <option value="6">เมษายน 2569</option>
+                        <option value="7">พฤษภาคม 2569</option>
+                        <option value="8">มิถุนายน 2569</option>
+                        <option value="9">กรกฎาคม 2569</option>
+                        <option value="10">สิงหาคม 2569</option>
+                        <option value="11" selected>กันยายน 2569</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">ยุทธศาสตร์</label>
+                    <select id="dashStrategy" onchange="updateDashboard()">
+                        <option value="all">ทั้งหมด</option>
+                        <option value="1">ยุทธศาสตร์ที่ 1 PP&P Excellence</option>
+                        <option value="2">ยุทธศาสตร์ที่ 2 Service Excellence</option>
+                        <option value="3">ยุทธศาสตร์ที่ 3 People Excellence</option>
+                        <option value="4">ยุทธศาสตร์ที่ 4 Governance Excellence</option>
+                        <option value="5">ยุทธศาสตร์ที่ 5 Health Economic</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">ค้นหาตัวชี้วัด</label>
+                    <input type="text" id="searchKPI" placeholder="พิมพ์ชื่อตัวชี้วัด..." oninput="updateDashboard()">
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-label">KPI ทั้งหมด</span>
+                        <span class="stat-icon">🎯</span>
+                    </div>
+                    <div class="stat-value" id="statTotal">0</div>
+                </div>
+                <div class="stat-card passed">
+                    <div class="stat-header">
+                        <span class="stat-label">ผ่านเกณฑ์</span>
+                        <span class="stat-icon">✅</span>
+                    </div>
+                    <div class="stat-value" id="statPassed">0</div>
+                </div>
+                <div class="stat-card failed">
+                    <div class="stat-header">
+                        <span class="stat-label">ไม่ผ่านเกณฑ์</span>
+                        <span class="stat-icon">❌</span>
+                    </div>
+                    <div class="stat-value" id="statFailed">0</div>
+                </div>
+                <div class="stat-card pending">
+                    <div class="stat-header">
+                        <span class="stat-label">รอข้อมูล</span>
+                        <span class="stat-icon">⏳</span>
+                    </div>
+                    <div class="stat-value" id="statPending">0</div>
+                </div>
+                <div class="stat-card" style="border-left: 4px solid #6366f1; background: linear-gradient(135deg, #ffffff 0%, #eef2ff 100%);">
+                    <div class="stat-header">
+                        <span class="stat-label">คะแนนเฉลี่ยถ่วงน้ำหนัก</span>
+                        <span class="stat-icon">📊</span>
+                    </div>
+                    <div class="stat-value" id="statWeightedScore" style="color: #4f46e5;">-</div>
+                    <div style="font-size:12px;color:#64748b;margin-top:4px;" id="statScoreDetail"></div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-title">สัดส่วนผลการดำเนินงาน</div>
+                    <canvas id="pieChart" height="250"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">ผลงานตามยุทธศาสตร์</div>
+                    <canvas id="barChart" height="250"></canvas>
+                </div>
+            </div>
+
+            <!-- Strategy Summary -->
+            <div class="chart-card">
+                <div class="chart-title">สรุปตามยุทธศาสตร์</div>
+                <div class="strategy-list" id="strategyList"></div>
+            </div>
+
+            <!-- KPI Detail Table -->
+            <div class="chart-card" style="margin-top: 24px;">
+                <div class="chart-title">รายละเอียดตัวชี้วัด</div>
+                <div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    <span style="font-size: 13px; color: #94a3b8;">💡 คลิกที่แถวเพื่อดูรายละเอียด หรือคลิกปุ่ม "บันทึก" เพื่อไปยังหน้าบันทึกข้อมูล</span>
+                </div>
+                <div class="table-container" style="max-height: 600px; overflow-y: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 50px; position: sticky; top: 0;">ลำดับ</th>
+                                <th style="position: sticky; top: 0;">ยุทธศาสตร์</th>
+                                <th class="kpi-name" style="position: sticky; top: 0;">ตัวชี้วัด</th>
+                                <th style="width: 80px; position: sticky; top: 0;">เป้าหมาย</th>
+                                <th style="width: 80px; position: sticky; top: 0;">ผลงาน</th>
+                                <th style="width: 90px; position: sticky; top: 0;">คะแนน</th>
+                                <th style="width: 120px; position: sticky; top: 0;">ความก้าวหน้า</th>
+                                <th style="width: 110px; position: sticky; top: 0;">สถานะ</th>
+                                <th style="width: 80px; position: sticky; top: 0;">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboardTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Entry Tab -->
+        <div id="tab-entry" class="tab-content">
+            <div class="entry-section">
+                <div class="entry-header">
+                    <div class="entry-title">📝 บันทึกผลงานรายเดือน</div>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <select id="entryStrategy" style="width: 200px;" onchange="renderEntryList()">
+                            <option value="all">ทุกยุทธศาสตร์</option>
+                            <option value="1">ยุทธศาสตร์ที่ 1 PP&P</option>
+                            <option value="2">ยุทธศาสตร์ที่ 2 Service</option>
+                            <option value="3">ยุทธศาสตร์ที่ 3 People</option>
+                            <option value="4">ยุทธศาสตร์ที่ 4 Governance</option>
+                            <option value="5">ยุทธศาสตร์ที่ 5 Health Economic</option>
+                        </select>
+                        <input type="text" id="entrySearch" placeholder="🔍 ค้นหาตัวชี้วัด..." style="width: 200px;" oninput="renderEntryList()">
+                    </div>
+                </div>
+
+                <!-- KPI Cards List -->
+                <div class="kpi-entry-list" id="kpiEntryList"></div>
+            </div>
+        </div>
+
+        <!-- Report Tab -->
+        <div id="tab-report" class="tab-content">
+            <!-- AI Analysis Section -->
+            <div class="entry-section" style="margin-bottom: 24px; background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); border-color: #4f46e5;">
+                <div class="entry-header">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🤖</div>
+                        <div>
+                            <div class="entry-title" style="color: #c4b5fd;">วิเคราะห์ผลงาน KPI ด้วย Claude AI</div>
+                            <div style="font-size: 13px; color: #a5b4fc;">ใช้ปัญญาประดิษฐ์วิเคราะห์แนวโน้ม จุดแข็ง จุดอ่อน และข้อเสนอแนะ</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ai-analysis-options">
+                    <div class="ai-option-grid">
+                        <div class="ai-option-card" onclick="generateAIPrompt('overview')">
+                            <div class="ai-option-icon">📊</div>
+                            <div class="ai-option-title">วิเคราะห์ภาพรวม</div>
+                            <div class="ai-option-desc">สรุปผลงาน KPI ทั้งหมด พร้อมข้อเสนอแนะเชิงนโยบาย</div>
+                        </div>
+                        <div class="ai-option-card" onclick="generateAIPrompt('strategy')">
+                            <div class="ai-option-icon">🎯</div>
+                            <div class="ai-option-title">วิเคราะห์ตามยุทธศาสตร์</div>
+                            <div class="ai-option-desc">เปรียบเทียบผลงานแต่ละยุทธศาสตร์</div>
+                        </div>
+                        <div class="ai-option-card" onclick="generateAIPrompt('trend')">
+                            <div class="ai-option-icon">📈</div>
+                            <div class="ai-option-title">วิเคราะห์แนวโน้ม</div>
+                            <div class="ai-option-desc">พยากรณ์แนวโน้มและคาดการณ์ผลลัพธ์</div>
+                        </div>
+                        <div class="ai-option-card" onclick="generateAIPrompt('problem')">
+                            <div class="ai-option-icon">⚠️</div>
+                            <div class="ai-option-title">วิเคราะห์ KPI ที่ต้องปรับปรุง</div>
+                            <div class="ai-option-desc">ระบุตัวชี้วัดที่มีปัญหาและแนวทางแก้ไข</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Prompt Output -->
+                <div id="aiPromptSection" style="display: none; margin-top: 20px;">
+                    <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="font-size: 14px; color: #64748b; font-weight: 500;">📋 Prompt สำหรับ Claude AI</span>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-secondary" onclick="copyAIPrompt()" style="padding: 8px 16px; font-size: 12px;">📋 คัดลอก</button>
+                                <button class="btn btn-primary" onclick="openClaudeAI()" style="padding: 8px 16px; font-size: 12px;">🚀 เปิด Claude.ai</button>
+                            </div>
+                        </div>
+                        <textarea id="aiPromptText" readonly style="width: 100%; height: 200px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; color: #334155; font-family: inherit; font-size: 13px; resize: vertical;"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="entry-section">
+                <div class="entry-header">
+                    <div class="entry-title">📋 รายงานผลการดำเนินงาน KPI</div>
+                    <div class="export-section">
+                        <button class="btn btn-primary" onclick="exportCSV()">📥 Export CSV</button>
+                        <button class="btn btn-secondary" onclick="printReport()">🖨️ พิมพ์รายงาน</button>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <div class="control-group">
+                        <label class="control-label">ยุทธศาสตร์</label>
+                        <select id="reportStrategy" onchange="renderReportTable()">
+                            <option value="all">ทั้งหมด</option>
+                            <option value="1">ยุทธศาสตร์ที่ 1 PP&P Excellence</option>
+                            <option value="2">ยุทธศาสตร์ที่ 2 Service Excellence</option>
+                            <option value="3">ยุทธศาสตร์ที่ 3 People Excellence</option>
+                            <option value="4">ยุทธศาสตร์ที่ 4 Governance Excellence</option>
+                            <option value="5">ยุทธศาสตร์ที่ 5 Health Economic</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">ลำดับ</th>
+                                <th class="kpi-name">ตัวชี้วัด</th>
+                                <th style="width: 70px;">เป้าหมาย</th>
+                                <th style="width: 50px;">ต.ค.</th>
+                                <th style="width: 50px;">พ.ย.</th>
+                                <th style="width: 50px;">ธ.ค.</th>
+                                <th style="width: 50px;">ม.ค.</th>
+                                <th style="width: 50px;">ก.พ.</th>
+                                <th style="width: 50px;">มี.ค.</th>
+                                <th style="width: 50px;">เม.ย.</th>
+                                <th style="width: 50px;">พ.ค.</th>
+                                <th style="width: 50px;">มิ.ย.</th>
+                                <th style="width: 50px;">ก.ค.</th>
+                                <th style="width: 50px;">ส.ค.</th>
+                                <th style="width: 50px;">ก.ย.</th>
+                                <th style="width: 80px;">ผลประเมิน</th>
+                                <th style="width: 70px;">AI</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD Tab -->
+        <div id="tab-card" class="tab-content">
+            <!-- CARD Header -->
+            <div class="entry-section" style="margin-bottom: 24px; background: linear-gradient(135deg, #065f46 0%, #047857 100%); border-color: #10b981;">
+                <div class="entry-header">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📑</div>
+                        <div>
+                            <div class="entry-title" style="color: #d1fae5;">CARD การรับนิเทศ/ตรวจราชการ รอบที่ 1</div>
+                            <div style="font-size: 13px; color: #a7f3d0;">ปีงบประมาณ 2569 คปสอ.เสลภูมิ (Context-Action-Result-Development)</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 16px; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                    <div style="font-size: 13px; color: #d1fae5; margin-bottom: 8px;">📌 เลือกตัวชี้วัดที่ต้องการบันทึก/แก้ไข CARD</div>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                        <select id="cardKPISelect" style="flex: 1; min-width: 300px;" onchange="loadCARDData()">
+                            <option value="">-- เลือกตัวชี้วัด --</option>
+                        </select>
+                        <button class="btn btn-success" onclick="generateCARDPrompt()" style="white-space: nowrap;">
+                            🤖 AI ช่วยเขียน
+                        </button>
+                        <button class="btn btn-primary" onclick="exportCARDWord()" style="white-space: nowrap;">
+                            📄 Export Word
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARD Form -->
+            <div class="entry-section" id="cardFormSection" style="display: none;">
+                <div class="card-form-container">
+                    <!-- Title -->
+                    <div class="card-form-title">
+                        <h1>Template การวิเคราะห์ CARD การรับนิเทศ/ตรวจราชการ รอบที่ 1</h1>
+                        <h2>ปีงบประมาณ 2569 คปสอ.เสลภูมิ</h2>
+                    </div>
+
+                    <!-- KPI Info -->
+                    <div class="card-kpi-info" id="cardKPIInfo"></div>
+
+                    <!-- 1. Context -->
+                    <div class="card-section">
+                        <div class="card-section-header">1. Context ผลงานย้อนหลัง 3 ปี</div>
+                        <div class="card-section-body">
+                            <table class="card-table">
+                                <thead>
+                                    <tr>
+                                        <th>ปีงบประมาณ</th>
+                                        <th>2565</th>
+                                        <th>2566</th>
+                                        <th>2567</th>
+                                        <th>2568</th>
+                                        <th>2569 รอบที่ 1</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>ผลงาน</strong></td>
+                                        <td><input type="text" class="card-input-small" id="card_result_2565" placeholder="กรอกข้อมูล"></td>
+                                        <td><input type="text" class="card-input-small" id="card_result_2566" placeholder="กรอกข้อมูล"></td>
+                                        <td><input type="text" class="card-input-small" id="card_result_2567" placeholder="กรอกข้อมูล"></td>
+                                        <td><input type="text" class="card-input-small" id="card_result_2568" placeholder="กรอกข้อมูล"></td>
+                                        <td id="card_result_2569_q1" style="font-weight: 600;">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="card-subsection-title">วิเคราะห์ปัญหาที่เกิดจากการดำเนินงานในปีงบประมาณ 2568 โดยใช้ Six Building Blocks</div>
+                            <table class="card-table six-blocks">
+                                <tbody>
+                                    <tr>
+                                        <th>1. SERVICE DELIVERY<br/><span>(การให้บริการสุขภาพ)</span></th>
+                                        <td><textarea class="card-textarea" id="card_block_1" placeholder="(วิเคราะห์ปัญหา)"></textarea></td>
+                                    </tr>
+                                    <tr>
+                                        <th>2. HEALTH WORKFORCE<br/><span>(กำลังคนด้านสุขภาพ)</span></th>
+                                        <td><textarea class="card-textarea" id="card_block_2" placeholder="(วิเคราะห์ปัญหา)"></textarea></td>
+                                    </tr>
+                                    <tr>
+                                        <th>3. HEALTH INFORMATION SYSTEMS<br/><span>(ระบบข้อมูลสุขภาพ)</span></th>
+                                        <td><textarea class="card-textarea" id="card_block_3" placeholder="(วิเคราะห์ปัญหา)"></textarea></td>
+                                    </tr>
+                                    <tr>
+                                        <th>4. ACCESS TO ESSENTIAL MEDICINES<br/><span>(การเข้าถึงยาและเวชภัณฑ์)</span></th>
+                                        <td><textarea class="card-textarea" id="card_block_4" placeholder="(วิเคราะห์ปัญหา)"></textarea></td>
+                                    </tr>
+                                    <tr>
+                                        <th>5. HEALTH FINANCING<br/><span>(การเงินการคลังด้านสุขภาพ)</span></th>
+                                        <td><textarea class="card-textarea" id="card_block_5" placeholder="(วิเคราะห์ปัญหา)"></textarea></td>
+                                    </tr>
+                                    <tr>
+                                        <th>6. LEADERSHIP/GOVERNANCE<br/><span>(การบริหารจัดการ/ธรรมาภิบาล)</span></th>
+                                        <td><textarea class="card-textarea" id="card_block_6" placeholder="(วิเคราะห์ปัญหา)"></textarea></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 2. Action -->
+                    <div class="card-section">
+                        <div class="card-section-header">2. Action กิจกรรม/วิธีดำเนินงาน</div>
+                        <div class="card-section-body">
+                            <textarea class="card-textarea-large" id="card_action" placeholder="(กิจกรรม/วิธีดำเนินงาน เพื่อแก้ไขปัญหาที่เกิดจากการวิเคราะห์ Context)"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 3. Result -->
+                    <div class="card-section">
+                        <div class="card-section-header">3. Result ผลลัพธ์ที่เกิดขึ้น</div>
+                        <div class="card-section-body">
+                            <table class="card-table result-table">
+                                <thead>
+                                    <tr>
+                                        <th>เกณฑ์/เป้าหมายปีงบประมาณ 2569</th>
+                                        <th>ผลงานปีงบประมาณ 2569</th>
+                                        <th>ผลการประเมิน</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td id="card_target">-</td>
+                                        <td id="card_performance">-</td>
+                                        <td id="card_evaluation">รอข้อมูล</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 4. Development -->
+                    <div class="card-section">
+                        <div class="card-section-header">4. Development สิ่งที่จะพัฒนาในปีงบประมาณ 2569</div>
+                        <div class="card-section-body">
+                            <textarea class="card-textarea-large" id="card_development" placeholder="(ระบุสิ่งที่จะพัฒนา)"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 5. Best Practice -->
+                    <div class="card-section">
+                        <div class="card-section-header">5. นวัตกรรม/ผลงานเด่น (Best Practice)</div>
+                        <div class="card-section-body">
+                            <textarea class="card-textarea-large" id="card_bestpractice" placeholder="(ถ้ามี)"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 6. Success Factors -->
+                    <div class="card-section">
+                        <div class="card-section-header">6. ปัจจัยแห่งความสำเร็จ</div>
+                        <div class="card-section-body">
+                            <textarea class="card-textarea-large" id="card_success" placeholder="(ระบุปัจจัย)"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 7. Problems -->
+                    <div class="card-section">
+                        <div class="card-section-header">7. ปัญหาและอุปสรรค/จุดร่วมที่สะท้อนปัญหาหรือความเสี่ยงต่อความไม่สำเร็จของงาน</div>
+                        <div class="card-section-body">
+                            <textarea class="card-textarea-large" id="card_problems" placeholder="(ระบุปัญหาและอุปสรรค)"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 8. Policy Recommendations -->
+                    <div class="card-section">
+                        <div class="card-section-header">8. ข้อเสนอเชิงนโยบาย/ข้อเสนอเพื่อปรับปรุงพัฒนา</div>
+                        <div class="card-section-body">
+                            <textarea class="card-textarea-large" id="card_policy" placeholder="(ข้อเสนอเพื่อปรับปรุงพัฒนา)"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 9. Support Needed -->
+                    <div class="card-section">
+                        <div class="card-section-header">9. สิ่งที่ต้องการสนับสนุนจากผู้ทำหน้าที่ตรวจราชการและนิเทศงาน และส่วนกลาง</div>
+                        <div class="card-section-body">
+                            <textarea class="card-textarea-large" id="card_support" placeholder="(สิ่งที่ต้องการสนับสนุน)"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Reporter Info -->
+                    <div class="card-section">
+                        <div class="card-section-header">ข้อมูลผู้รายงาน</div>
+                        <div class="card-section-body">
+                            <div class="card-reporter-grid">
+                                <div class="card-reporter-item">
+                                    <label>ผู้รายงาน</label>
+                                    <input type="text" class="card-input" id="card_reporter" placeholder="ชื่อ-สกุล">
+                                </div>
+                                <div class="card-reporter-item">
+                                    <label>ตำแหน่ง/หน่วยงาน</label>
+                                    <input type="text" class="card-input" id="card_position" placeholder="ตำแหน่ง">
+                                </div>
+                                <div class="card-reporter-item">
+                                    <label>เบอร์ติดต่อ</label>
+                                    <input type="text" class="card-input" id="card_phone" placeholder="เบอร์โทร">
+                                </div>
+                                <div class="card-reporter-item">
+                                    <label>E-mail</label>
+                                    <input type="text" class="card-input" id="card_email" placeholder="email@example.com">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Save Button -->
+                    <div class="card-actions">
+                        <button class="btn btn-secondary" onclick="clearCARDForm()">🗑️ ล้างข้อมูล</button>
+                        <button class="btn btn-success" onclick="saveCARDData()">💾 บันทึก CARD</button>
+                    </div>
+
+                    <div class="card-note">
+                        หมายเหตุ : การตรวจราชการ รอบที่ 1 ใช้รายงานข้อมูลผลการดำเนินงาน รอบ 4 เดือน ณ วันที่ 20 ม.ค.
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARD AI Prompt Section -->
+            <div class="entry-section" id="cardAISection" style="display: none; background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border-color: #c4b5fd;">
+                <div class="entry-header">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="font-size: 24px;">🤖</div>
+                        <div>
+                            <div class="entry-title" style="color: #6d28d9;">Prompt สำหรับ Claude AI ช่วยเขียน CARD</div>
+                            <div style="font-size: 13px; color: #7c3aed;">คัดลอก Prompt นี้ไปใช้กับ Claude.ai เพื่อให้ช่วยวิเคราะห์และเขียน CARD</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary" onclick="copyCARDPrompt()" style="padding: 8px 16px; font-size: 12px;">📋 คัดลอก</button>
+                        <button class="btn btn-primary" onclick="openClaudeAI()" style="padding: 8px 16px; font-size: 12px;">🚀 เปิด Claude.ai</button>
+                    </div>
+                </div>
+                <textarea id="cardPromptText" readonly style="width: 100%; height: 300px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; color: #334155; font-family: 'Sarabun', sans-serif; font-size: 13px; resize: vertical; margin-top: 16px;"></textarea>
+            </div>
+
+            <!-- CARD List -->
+            <div class="entry-section">
+                <div class="entry-header">
+                    <div class="entry-title">📋 สถานะการบันทึก CARD ตัวชี้วัด</div>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <select id="cardStrategyFilter" style="width: 200px;" onchange="renderCARDList()">
+                            <option value="all">ทุกยุทธศาสตร์</option>
+                            <option value="1">ยุทธศาสตร์ที่ 1 PP&P</option>
+                            <option value="2">ยุทธศาสตร์ที่ 2 Service</option>
+                            <option value="3">ยุทธศาสตร์ที่ 3 People</option>
+                            <option value="4">ยุทธศาสตร์ที่ 4 Governance</option>
+                            <option value="5">ยุทธศาสตร์ที่ 5 Health Economic</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="card-summary-grid" id="cardSummaryGrid">
+                    <div class="card-summary-item">
+                        <div class="card-summary-icon">📊</div>
+                        <div class="card-summary-value" id="cardTotalKPI">82</div>
+                        <div class="card-summary-label">ตัวชี้วัดทั้งหมด</div>
+                    </div>
+                    <div class="card-summary-item completed">
+                        <div class="card-summary-icon">✅</div>
+                        <div class="card-summary-value" id="cardCompleted">0</div>
+                        <div class="card-summary-label">บันทึกแล้ว</div>
+                    </div>
+                    <div class="card-summary-item pending">
+                        <div class="card-summary-icon">⏳</div>
+                        <div class="card-summary-value" id="cardPending">82</div>
+                        <div class="card-summary-label">รอบันทึก</div>
+                    </div>
+                    <div class="card-summary-item progress">
+                        <div class="card-summary-icon">📈</div>
+                        <div class="card-summary-value" id="cardProgress">0%</div>
+                        <div class="card-summary-label">ความคืบหน้า</div>
+                    </div>
+                </div>
+
+                <div class="table-container" style="margin-top: 16px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">ลำดับ</th>
+                                <th>ยุทธศาสตร์</th>
+                                <th class="kpi-name">ตัวชี้วัด</th>
+                                <th style="width: 80px;">เป้าหมาย</th>
+                                <th style="width: 80px;">ผลงาน Q1</th>
+                                <th style="width: 100px;">สถานะผลงาน</th>
+                                <th style="width: 100px;">สถานะ CARD</th>
+                                <th style="width: 120px;">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cardTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Detail Modal -->
+        <div class="modal-overlay" id="kpiModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <div>
+                        <span class="strategy-badge" id="modalStrategy"></span>
+                        <h2 style="margin-top: 12px; font-size: 18px;" id="modalTitle"></h2>
+                    </div>
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                </div>
+                <div id="modalContent"></div>
+            </div>
+        </div>
+
+        <!-- Toast -->
+        <div class="toast" id="toast">
+            <span id="toastIcon">✅</span>
+            <span id="toastMessage">บันทึกข้อมูลเรียบร้อยแล้ว</span>
+        </div>
+    </div>
+
+    <script>
+        // KPI Data - 82 ตัวชี้วัด
+const kpiData = [
+            { id: 1, strategy: 1, plan: "การพัฒนาคุณภาพชีวิตคนไทยทุกกลุ่มวัย (ด้านสุขภาพ)", name: "อัตราส่วนการตายมารดาไทยต่อการเกิดมีชีพแสนคน", target: 15, unit: "ร้อยละ", weight: 2.0, source: "Key in", lowerIsBetter: true },
+            { id: 2, strategy: 1, plan: "การพัฒนาคุณภาพชีวิตคนไทยทุกกลุ่มวัย (ด้านสุขภาพ)", name: "ร้อยละหญิงตั้งครรภ์ได้รับการฝากครรภ์ครั้งแรกก่อนหรือเท่ากับ 12 สัปดาห์", target: 75, unit: "ร้อยละ", weight: 2.0, source: "HDC" },
+            { id: 3, strategy: 1, plan: "การพัฒนาคุณภาพชีวิตคนไทยทุกกลุ่มวัย (ด้านสุขภาพ)", name: "ร้อยละของเด็ก 0 - 5 ปี มีพัฒนาการสมวัย (อบจ.13 + คัดกรอง)", target: 88, unit: "ร้อยละ", weight: 2.0, source: "HDC" },
+            { id: 4, strategy: 1, plan: "การพัฒนาคุณภาพชีวิตคนไทยทุกกลุ่มวัย (ด้านสุขภาพ)", name: "ร้อยละของเด็กปฐมวัยที่มีพัฒนาการล่าช้าเข้าถึงบริการพัฒนาการและสุขภาพจิตที่ได้มาตรฐาน", target: 50, unit: "ร้อยละ", weight: 1.0, source: "HDC" },
+            { id: 5, strategy: 1, plan: "การพัฒนาคุณภาพชีวิตคนไทยทุกกลุ่มวัย (ด้านสุขภาพ)", name: "ร้อยละความครอบคลุมการคัดกรองการได้ยินของทารกแรกเกิด", target: 95, unit: "ร้อยละ", weight: 0.0, source: "HDC" },
+            { id: 6, strategy: 1, plan: "การพัฒนาคุณภาพชีวิตคนไทยทุกกลุ่มวัย (ด้านสุขภาพ)", name: "ร้อยละของเด็ก 0 - 5 ปี ฟันดีไม่มีผุ (Cavity Free)", target: 80, unit: "ร้อยละ", weight: 1.0, source: "HDC" },
+            { id: 7, strategy: 1, plan: "การพัฒนาคุณภาพชีวิตคนไทยทุกกลุ่มวัย (ด้านสุขภาพ)", name: "ร้อยละของเด็กอายุ 12 ปี มีฟันดีไม่มีผุ (Cavity Free)", target: 75, unit: "ร้อยละ", weight: 1.0, source: "HDC" },
+            { id: 8, strategy: 1, plan: "การพัฒนาคุณภาพชีวิตคนไทยทุกกลุ่มวัย (ด้านสุขภาพ)", name: "ผู้สูงอายุและผู้ที่มีภาวะพึ่งพิงที่ได้รับการดูแลตาม Care Plan (อบจ.16)", target: 90, unit: "ร้อยละ", weight: 0.5, source: "Key in" },
+            { id: 9, strategy: 1, plan: "การพัฒนาคุณภาพชีวิตคนไทยทุกกลุ่มวัย (ด้านสุขภาพ)", name: "ร้อยละของชุมชนมีการดำเนินการจัดการสุขภาพที่เหมาะสมกับประชาชน", target: 90, unit: "ร้อยละ", weight: 1.0, source: "Key in" },
+            { id: 10, strategy: 1, plan: "การพัฒนาคุณภาพชีวิตคนไทยทุกกลุ่มวัย (ด้านสุขภาพ)", name: "อัตราความรอบรู้ด้านสุขภาพของประชาชนไทย อายุ 15 ปี ขึ้นไป", target: 85, unit: "อัตรา", weight: 1.0, source: "Key in" },
+            { id: 11, strategy: 1, plan: "การพัฒนาคุณภาพชีวิตคนไทยทุกกลุ่มวัย (ด้านสุขภาพ)", name: "ร้อยละของประชากรกลุ่มเป้าหมายที่มีความรอบรู้สุขภาพในการป้องกันควบคุมโรคไข้หวัดนกระดับพอเพียงขึ้นไป", target: 30, unit: "ร้อยละ", weight: 0.5, source: "Key in" },
+            { id: 12, strategy: 1, plan: "การพัฒนาคุณภาพชีวิตคนไทยทุกกลุ่มวัย (ด้านสุขภาพ)", name: "ระดับความสำเร็จของอำเภอผ่านเกณฑ์การประเมินการพัฒนาคุณภาพชีวิตที่มีคุณภาพ", target: 5, unit: "ร้อยละ", weight: 2.0, source: "Key in" },
+            { id: 13, strategy: 1, plan: "การป้องกันควบคุมโรคและลดปัจจัยเสี่ยงด้านสุขภาพ", name: "ระดับความสำเร็จของการพัฒนาระบบการแพทย์ฉุกเฉินและการจัดการภาวะฉุกเฉินด้านการแพทย์ และสาธารณสุข (Emergency Care System and Public Health Emergency Management)", target: 5, unit: "ระดับ", weight: 2.0, source: "Key in" },
+            { id: 14, strategy: 1, plan: "การป้องกันควบคุมโรคและลดปัจจัยเสี่ยงด้านสุขภาพ", name: "ร้อยละการตรวจติดตามยืนยันวินิจฉัยกลุ่มสงสัยป่วยโรคเบาหวาน", target: 73, unit: "ร้อยละ", weight: 2.0, source: "HDC" },
+            { id: 15, strategy: 1, plan: "การป้องกันควบคุมโรคและลดปัจจัยเสี่ยงด้านสุขภาพ", name: "ร้อยละการตรวจติดตามยืนยันวินิจฉัยกลุ่มสงสัยป่วยโรคความดันโลหิตสูง", target: 94, unit: "ร้อยละ", weight: 1.0, source: "HDC" },
+            { id: 16, strategy: 1, plan: "การป้องกันควบคุมโรคและลดปัจจัยเสี่ยงด้านสุขภาพ", name: "ร้อยละของประชากรกลุ่มเสี่ยงโรคเบาหวาน/ความดันโลหิตสูง ได้รับการปรับเปลี่ยนพฤติกรรม", target: 30, unit: "ร้อยละ", weight: 0.5, source: "HDC" },
+            { id: 17, strategy: 1, plan: "การป้องกันควบคุมโรคและลดปัจจัยเสี่ยงด้านสุขภาพ", name: "อัตราป่วยรายใหม่ของโรคเบาหวานต่อแสนประชากรในปีงบประมาณ", target: 650, unit: "อัตรา", weight: 0.5, source: "HDC", lowerIsBetter: true },
+            { id: 18, strategy: 1, plan: "การป้องกันควบคุมโรคและลดปัจจัยเสี่ยงด้านสุขภาพ", name: "อัตราป่วยรายใหม่ของโรคความดันโลหิตสูงต่อแสนประชากรในปีงบประมาณ", target: 1340, unit: "อัตรา", weight: 0.5, source: "HDC", lowerIsBetter: true },
+            { id: 19, strategy: 1, plan: "การป้องกันควบคุมโรคและลดปัจจัยเสี่ยงด้านสุขภาพ", name: "ร้อยละของผู้ป่วยโรคเบาหวานที่ควบคุมระดับน้ำตาลในเลือดได้ดี", target: 40, unit: "ร้อยละ", weight: 2.0, source: "HDC" },
+            { id: 20, strategy: 1, plan: "การป้องกันควบคุมโรคและลดปัจจัยเสี่ยงด้านสุขภาพ", name: "ร้อยละของผุ้ป่วยโรคความดันโลหิตสูงที่ควบคุมระดับความดันโลหิตได้ดี", target: 72, unit: "ร้อยละ", weight: 1.0, source: "HDC" },
+            { id: 21, strategy: 1, plan: "การป้องกันควบคุมโรคและลดปัจจัยเสี่ยงด้านสุขภาพ", name: "ร้อยละของผู้ป่วยเบาหวานชนิดที่ 2 ที่เข้าสู่โรคเบาหวานระยะสงบ (DM remission) ต่อผู้ป่วยเบาหวานชนิดที่ 2 ทั้งหมดในพื้นที่", target: 1.5, unit: "ร้อยละ", weight: 1.0, source: "HDC" },
+            { id: 22, strategy: 1, plan: "การป้องกันควบคุมโรคและลดปัจจัยเสี่ยงด้านสุขภาพ", name: "อัตราการเสียชีวิตและบาดเจ็บจากอุบัติเหตุทางถนนในกลุ่มเด็กและเยาวชน (ช่วงวัย 1-18 ปี) ลดลง", target: 3, unit: "อัตรา", weight: 2.0, source: "Key in", lowerIsBetter: true },
+            { id: 23, strategy: 1, plan: "การป้องกันควบคุมโรคและลดปัจจัยเสี่ยงด้านสุขภาพ", name: "ร้อยละของประชาชนที่เกิดก่อนปี พ.ศ. 2535 ได้รับการคัดกรองไวรัสตับอักเสบบีและซี ด้วยชุดตรวจ Rapid Test", target: 100, unit: "ร้อยละ", weight: 0.5, source: "Key in" },
+            { id: 24, strategy: 1, plan: "การป้องกันควบคุมโรคและลดปัจจัยเสี่ยงด้านสุขภาพ", name: "ร้อยละความครอบคลุมของวัคซีนป้องกันหัด - คางทูม-หัดเยอรมันเข็มที่ 2 (MMR2) ในเด็กอายุต่ำกว่า 2 ปี", target: 95, unit: "ร้อยละ", weight: 1.0, source: "HDC" },
+            { id: 25, strategy: 1, plan: "การป้องกันควบคุมโรคและลดปัจจัยเสี่ยงด้านสุขภาพ", name: "เด็ก 0-5 ปี มีความครอบคลุมการได้รับวัคซีนตามเกณฑ์มาตรฐาน", target: 90, unit: "ร้อยละ", weight: 1.0, source: "HDC" },
+            { id: 26, strategy: 1, plan: "การป้องกันควบคุมโรคและลดปัจจัยเสี่ยงด้านสุขภาพ", name: "ระดับความสำเร็จของตำบลผ่านเกณฑ์ตำบลควบคุมโรคเข้มแข็ง", target: 5, unit: "ร้อยละ", weight: 0.5, source: "Key in" },
+            { id: 27, strategy: 1, plan: "การป้องกันควบคุมโรคและลดปัจจัยเสี่ยงด้านสุขภาพ", name: "ร้อยละของประชากรอายุ 15 ปีขึ้นไปได้รับการคัดกรองเครื่องดื่มแอลกอฮอล์", target: 55, unit: "ระดับ", weight: 1.0, source: "Key in" },
+            { id: 28, strategy: 1, plan: "แผนที่ 4 การบริหารจัดการสิ่งแวดล้อม", name: "ร้อยละของประชากรอายุ 15 ปีขึ้นไปได้รับการคัดกรองพฤติกรรมการบริโภคผลิตภัณฑ์ยาสูบ", target: 60, unit: "ระดับ", weight: 1.0, source: "Key in" },
+            { id: 29, strategy: 1, plan: "แผนที่ 4 การบริหารจัดการสิ่งแวดล้อม", name: "ระดับความสำเร็จของการดำเนินงานสถานที่จำหน่ายอาหาร ผ่านเกณฑ์มาตรฐานตามกฎหมายกำหนด", target: 5, unit: "ระดับ", weight: 1.0, source: "Key in" },
+            { id: 30, strategy: 2, plan: "การพัฒนาระบบการแพทย์ปฐมภูมิ", name: "ระดับความสำเร็จของโรงพยาบาลที่พัฒนาอนามัยสิ่งแวดล้อมได้ตามเกณฑ์ GREEN & CLEAN Hospital Challenge", target: 5, unit: "ร้อยละ", weight: 2.0, source: "Key in" },
+            { id: 31, strategy: 2, plan: "การพัฒนาระบบการแพทย์ปฐมภูมิ", name: "ร้อยละหน่วยบริการปฐมภูมิและเครือข่ายหน่วยบริการปฐมภูมิ ที่ผ่านเกณฑ์มาตรฐานหน่วยบริการปฐมภูมิ พ.ศ. 2568 – 2570", target: 100, unit: "ร้อยละ", weight: 2.0, source: "Key in" },
+            { id: 32, strategy: 2, plan: "การพัฒนาระบบการแพทย์ปฐมภูมิ", name: "ระดับความสำเร็จของโรงพยาบาลมีการพัฒนาฐานข้อมูลชุมชนเพื่อพัฒนาระบบหมอครอบครัว", target: 5, unit: "ร้อยละ", weight: 0.5, source: "Key in" },
+            { id: 33, strategy: 2, plan: "การพัฒนาระบบการแพทย์ปฐมภูมิ", name: "ร้อยละของแกนนำสุขภาพมีศักยภาพในการจัดการสุขภาพชุมชน", target: 75, unit: "ร้อยละ", weight: 1.0, source: "HDC" },
+            { id: 34, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ร้อยละของผู้ป่วยเบาหวาน ความดันโลหิตสูงที่ขึ้นทะเบียนและอยู่ในพื้นที่ ได้รับการประเมินโอกาสเสี่ยงต่อโรคหลอดเลือดสมอง และโรคหัวใจ (CVD Risk)", target: 90, unit: "ร้อยละ", weight: 1.0, source: "HDC" },
+            { id: 35, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ร้อยละของผู้ป่วยโรคหลอดเลือดสมอง Acute Stroke ที่มาโรงพยาบาล ภายใน 270 นาที หลังเกิดอาการ", target: 50, unit: "ร้อยละ", weight: 3.0, source: "HDC" },
+            { id: 36, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "อัตราตายของผู้ป่วยโรคหลอดเลือดสมอง (Stroke : I60-I64)", target: 7, unit: "อัตรา", weight: 0.0, source: "Key in", lowerIsBetter: true },
+            { id: 37, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "อัตราความสำเร็จการรักษาผู้ป่วยวัณโรคปอดรายใหม่ (Success Rate)", target: 88, unit: "ร้อยละ", weight: 2.0, source: "Key in" },
+            { id: 38, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ร้อยละความครอบคลุมของการขึ้นทะเบียนรักษาผู้ป่วยวัณโรค รายใหม่และกลับเป็นซ้ำ", target: 85, unit: "ร้อยละ", weight: 1.0, source: "Key in" },
+            { id: 39, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ร้อยละการดำเนินงานอำเภอใช้ยาอย่างสมเหตุผล (RDU District 101)   09 4554 7965", target: 100, unit: "ระดับ", weight: 2.0, source: "Key in" },
+            { id: 40, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ระดับความสำเร็จของการดำเนินงานเพื่อลดอัตราตายทารกแรกเกิดน้อยกว่า 28 วัน", target: 5, unit: "ระดับ", weight: 2.0, source: "HDC" },
+            { id: 41, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ร้อยละของประชาชนที่มารับบริการในระดับปฐมภูมิได้รับการรักษาด้วยการแพทย์แผนไทยและการแพทย์ทางเลือก", target: 50, unit: "ร้อยละ", weight: 1.0, source: "Key in" },
+            { id: 42, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ร้อยละของมูลค่าการใช้ยาสมุนไพรในสิทธิ UC", target: 100, unit: "ร้อยละ", weight: 1.0, source: "Key in" },
+            { id: 43, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ร้อยละของผู้ป่วยที่ได้รับการวินิจฉัยโรค Common Diseases and Symtoms มีการสั่งจ่ายยาสมุนไพร", target: 15, unit: "ร้อยละ", weight: 1.0, source: "Key in" },
+            { id: 44, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ระดับความสำเร็จของการส่งเสริมและพัฒนาการเผยแพร่ภูมิปัญญาท้องถิ่นแพทย์พื้นบ้าน การใช้สมุนไพรในครัวเรือน และพัฒนาสมุนไพรเป็นผลิตภัณฑ์สุขภาพในชุมชน", target: 5, unit: "อัตรา", weight: 0.5, source: "Key in" },
+            { id: 45, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "อัตราการฆ่าตัวตายสำเร็จ", target: 7.8, unit: "ร้อยละ", weight: 1.0, source: "Key in", lowerIsBetter: true },
+            { id: 46, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ร้อยละของผู้พยายามฆ่าตัวตายเข้าถึงบริการที่มีประสิทธิภาพ", target: 70, unit: "ร้อยละ", weight: 1.0, source: "HDC" },
+            { id: 47, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ร้อยละของผู้ป่วยจิตเวชยาเสพติดก่อความรุนแรง (SMI-V) ในเขตสุขภาพเข้าถึงบริการได้รับการดูแลต่อเนื่องและไม่ก่อความรุนแรงซ้ำ", target: 40, unit: "ร้อยละ", weight: 1.0, source: "HDC" },
+            { id: 48, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ร้อยละการเข้าถึงบริการผู้ป่วยโรคจิตเวชและสารเสพติดที่มีความเสี่ยงสูงต่อการก่อความรุนแรง (SMI-V)", target: 40, unit: "ระดับ", weight: 1.0, source: "Key in" },
+            { id: 49, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ระดับความสำเร็จของร้อยละค่าเฉลี่ยถ่วงน้ำหนักการดูแลผู้ป่วยติดเชื้อในกระแสเลือดแบบรุนแรง ชนิด community-acquired", target: 5, unit: "อัตรา", weight: 3.0, source: "HDC" },
+            { id: 50, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "อัตราตายของผู้ป่วยโรคกล้ามเนื้อหัวใจตายเฉียบพลันชนิด STEMI", target: 9, unit: "ร้อยละ", weight: 0.0, source: "HDC", lowerIsBetter: true },
+            { id: 51, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ร้อยละของการให้การรักษาผู้ป่วย STEMI ได้ตามมาตรฐานเวลาที่กำหนด", target: 70, unit: "ร้อยละ", weight: 2.0, source: "HDC" },
+            { id: 52, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ระดับความสำเร็จของร้อยละค่าเฉลี่ยถ่วงน้ำหนักในการควบคุมโรคผู้ป่วยไตวายเรื้อรัง", target: 5, unit: "ร้อยละ", weight: 3.0, source: "Key in" },
+            { id: 53, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "อัตราส่วนของจำนวนผู้บริจาคอวัยวะสมองตายที่ได้รับการผ่าตัดนำอวัยวะออก ต่อจำนวนผู้ป่วยเสียชีวิตในโรงพยาบาล (โรงพยาบาล P+, P, A+, A)", target: 1.53, unit: "ร้อยละ", weight: 0.0, source: "Key in" },
+            { id: 54, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ร้อยละผู้ป่วยมะเร็งได้รับการรักษาภายในระยะเวลาที่กำหนด", target: 70, unit: "ร้อยละ", weight: 0.0, source: "HDC" },
+            { id: 55, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ร้อยละของผู้ที่ได้รับการคัดกรองมะเร็งปากมดลูก", target: 35, unit: "ร้อยละ", weight: 2.0, source: "HDC" },
+            { id: 56, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ร้อยละของผู้ที่ได้รับการคัดกรองมะเร็งลำไส้ใหญ่และไส้ตรง", target: 50, unit: "ร้อยละ", weight: 1.0, source: "Key in" },
+            { id: 57, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ร้อยละของผู้ที่มีผลผิดปกติ (มะเร็งปากมดลูก) ได้รับการส่องกล้อง Colposcopy", target: 70, unit: "ร้อยละ", weight: 0.0, source: "Key in" },
+            { id: 58, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ร้อยละของผู้ที่มีผลผิดปกติ (มะเร็งลำไส้ใหญ่ และไส้ผิดปกติ) ได้รับการส่องกล้อง Colonoscopy", target: 60, unit: "ร้อยละ", weight: 0.0, source: "Key in" },
+            { id: 59, strategy: 2, plan: "การพัฒนาระบบบริการสุขภาพ (Service Plan)", name: "ร้อยละของผู้ป่วยยาเสพติดเข้าสู่กระบวนการบำบัดรักษา ได้รับการดูแลอย่างมีคุณภาพต่อเนื่องจนถึงการติดตาม (เฉพาะระบบสมัครใจ) (Retention Rate)", target: 70, unit: "ร้อยละ", weight: 1.0, source: "Key in" },
+            { id: 60, strategy: 2, plan: "การพัฒนาระบบบริการการแพทย์ฉุกเฉินครบวงจรและระบบการ", name: "ร้อยละของผู้ป่วยประคับประคอง (Palliative Care) ที่ได้รับการดูแลตามแผนการดูแลล่วงหน้า (Advance Care Planning ; ACP) อย่างมีคุณภาพ โดยมีสถานที่เสียชีวิตเป็นไปตามความประสงค์ (Preferred Place of Death)", target: 60, unit: "ร้อยละ", weight: 1.0, source: "Key in" },
+            { id: 61, strategy: 2, plan: "การพัฒนาระบบบริการการแพทย์ฉุกเฉินครบวงจรและระบบการ", name: "ร้อยละของผู้ป่วยวิกฤตเข้าถึงบริการการแพทย์ฉุกเฉิน", target: 50, unit: "จำนวน", weight: 2.0, source: "Key in" },
+            { id: 62, strategy: 2, plan: "การพัฒนาระบบบริการการแพทย์ฉุกเฉินครบวงจรและระบบการ", name: "ร้อยละของบุคลากรทางการแพทย์ และแกนนำชุมชน ที่ผ่านการอบรมปฐมพยาบาลและฟื้นคืนชีพ (First Aid & CPR)", target: 100, unit: "ระดับ", weight: 1.0, source: "Key in" },
+            { id: 63, strategy: 2, plan: "การพัฒนาระบบบริการการแพทย์ฉุกเฉินครบวงจรและระบบการ", name: "ระดับความสำเร็จของการสร้างทีมผู้ก่อการดีป้องกันการจมน้ำ (Merit Maker)", target: 5, unit: "ระดับ", weight: 2.0, source: "Key in" },
+            { id: 64, strategy: 2, plan: "การพัฒนาตามโครงการพระราชดำริ โครงการเฉลิมพระเกียรต", name: "ระดับความสำเร็จของการดำเนินงานขับเคลื่อนความปลอดภัยทางถนนในระดับอำเภอ", target: 5, unit: "ร้อยละ", weight: 2.0, source: "Key in" },
+            { id: 65, strategy: 3, plan: "การพัฒนาระบบบริหารจัดการองค์กร", name: "ร้อยละผู้ป่วยในพระบรมราชานุเคราะห์ และพระราชานุเคราะห์ ได้รับการดูแลอย่างมีคุณภาพ", target: 90, unit: "ร้อยละ", weight: 0.0, source: "Key in" },
+            { id: 66, strategy: 4, plan: "การพัฒนาระบบบริการสุขภาพดิจิทัล", name: "ระดับความสำเร็จของหน่วยงานที่เป็นองค์กรแห่งความสุขที่มีคุณภาพ", target: 70, unit: "ร้อยละ", weight: 1.0, source: "Key in" },
+            { id: 67, strategy: 4, plan: "การพัฒนาระบบบริการสุขภาพดิจิทัล", name: "ระดับความสำเร็จของหน่วยงานที่ผ่านเกณฑ์มาตรฐานความมั่นคงปลอดภัยไซเบอร์ระดับสูง", target: 100, unit: "ร้อยละ", weight: 1.0, source: "HDC" },
+            { id: 68, strategy: 4, plan: "การพัฒนาระบบบริการสุขภาพดิจิทัล", name: "ร้อยละการให้บริการการแพทย์ทางไกลตามเกณฑ์ที่กำหนด", target: 30, unit: "ระดับ", weight: 2.0, source: "Key in" },
+            { id: 69, strategy: 4, plan: "การพัฒนาระบบบริการสุขภาพดิจิทัล", name: "ระดับความสำเร็จของโรงพยาบาลที่ดำเนินงานผ่านมาตรฐานโรงพยาบาลอัจฉริยะระดับทองขึ้นไป", target: 5, unit: "จำนวน", weight: 1.0, source: "Key in" },
+            { id: 70, strategy: 4, plan: "การพัฒนาระบบธรรมาภิบาลและองค์กรคุณภาพ", name: "หน่วยบริการปฐมภูมิผ่านเกณฑ์การประเมินมาตรฐานงานเทคโนโลยีสารสนเทศ", target: 5, unit: "ร้อยละ", weight: 0.5, source: "Key in" },
+            { id: 71, strategy: 4, plan: "การพัฒนาระบบธรรมาภิบาลและองค์กรคุณภาพ", name: "ร้อยละของหน่วยงานในสังกัดกระทรวงสาธารณสุขผ่านเกณฑ์การประเมิน ITA", target: 100, unit: "ร้อยละ", weight: 1.0, source: "Key in" },
+            { id: 72, strategy: 4, plan: "การพัฒนาระบบธรรมาภิบาลและองค์กรคุณภาพ", name: "ร้อยละของโรงพยาบาลสังกัดกระทรวงสาธารณสุขมีคุณภาพผ่านการรับรองตามมาตรฐาน", target: 100, unit: "ร้อยละ", weight: 1.0, source: "Key in" },
+            { id: 73, strategy: 4, plan: "การบริหารจัดการด้านการเงินการคลังสุขภาพ", name: "ระดับความสำเร็จของร้อยละค่าเฉลี่ยถ่วงน้ำหนักของโรงพยาบาลผ่านเกณฑ์พัฒนาโรงพยาบาลที่มีการตรวจทางห้องปฏิบัติการอย่างสมเหตุผล (RLU hospital Plus) ตามที่กำหนด", target: 5, unit: "ร้อยละ", weight: 3.0, source: "Key in" },
+            { id: 74, strategy: 4, plan: "การบริหารจัดการด้านการเงินการคลังสุขภาพ", name: "หน่วยบริการไม่มีภาวะวิกฤติทางการเงิน", target: 5, unit: "ร้อยละ", weight: 1.0, source: "Key in" },
+            { id: 75, strategy: 4, plan: "การบริหารจัดการด้านการเงินการคลังสุขภาพ", name: "หน่วยบริการผ่านเกณฑ์การประเมินประสิทธิภาพ การเงินการคลัง (Total Performance Score ; TPS)", target: 5, unit: "ระดับ", weight: 2.0, source: "Key in" },
+            { id: 76, strategy: 4, plan: "การพัฒนางานวิจัยและนวัตกรรมด้านสุขภาพ", name: "หน่วยบริการผ่านการประเมินศูนย์จัดเก็บรายได้คุณภาพระดับดีมาก", target: 5, unit: "ระดับ", weight: 1.0, source: "Key in" },
+            { id: 77, strategy: 4, plan: "การพัฒนางานวิจัยและนวัตกรรมด้านสุขภาพ", name: "ระดับความสำเร็จของการพัฒนานวัตกรรมหรือเทคโนโลยีสุขภาพที่คิดค้นใหม่หรือที่พัฒนาต่อยอด", target: 5, unit: "ร้อยละ", weight: 2.0, source: "Key in" },
+            { id: 78, strategy: 5, plan: "อุตสาหกรรมการแพทย์ครบวงจร การท่องเที่ยวเชิงสุขภาพ ", name: "ระดับความสำเร็จของการส่งเสริมผู้ประกอบสถานประกอบการเพื่อสุขภาพ", target: 5, unit: "ระดับ", weight: 2.0, source: "Key in" },
+            { id: 79, strategy: 5, plan: "อุตสาหกรรมการแพทย์ครบวงจร การท่องเที่ยวเชิงสุขภาพ ", name: "ระดับความสำเร็จของศูนย์เวลเนส (Wellness Center) / แหล่งท่องเที่ยวเชิงสุขภาพที่ได้รับการยกระดับแบบมีส่วนร่วม และสร้างสรรค์ ด้านภูมิปัญญาการแพทย์แผนไทย การแพทย์ทางเลือกและสมุนไพร ให้มีคุณค่าและมูลค่าสูงเพิ่มขึ้น", target: 5, unit: "ระดับ", weight: 2.0, source: "Key in" },
+            { id: 80, strategy: 5, plan: "อุตสาหกรรมการแพทย์ครบวงจร การท่องเที่ยวเชิงสุขภาพ ", name: "ระดับความสำเร็จของผลิตภัณฑ์สุขภาพที่ได้รับการส่งเสริมและได้รับอนุญาต", target: 5, unit: "ระดับ", weight: 2.0, source: "Key in" },
+            { id: 81, strategy: 5, plan: "อุตสาหกรรมการแพทย์ครบวงจร การท่องเที่ยวเชิงสุขภาพ ", name: "จำนวนผลิตภัณฑ์สุขภาพที่ได้รับการพัฒนามาตรฐานการผลิตที่พร้อมสำหรับการส่งออก", target: 1, unit: "จำนวน", weight: 0.0, source: "Key in" },
+            { id: 82, strategy: 5, plan: "อุตสาหกรรมการแพทย์ครบวงจร การท่องเที่ยวเชิงสุขภาพ ", name: "ระดับความสำเร็จของโรงพยาบาลส่งเสริมตลาดเขียว (Green Market)", target: 5, unit: "ระดับ", weight: 1.0, source: "Key in" },
+        ];
+
+        const responsibleData = {
+            1: { responsibleHospital: "น.ส.ชญาดา นวลฉวี", responsiblePHO: "นางเกศินี โสภาไฮ", supervisorHospital: "พญ.ภัทราวดี จันทร์เจริญ", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            2: { responsibleHospital: "น.ส.นนทรัตน์ ฤทธิมนตรี", responsiblePHO: "นางเกศินี โสภาไฮ", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            3: { responsibleHospital: "น.ส.พัชรินทร์ ใคร่นุ่นนา", responsiblePHO: "นางเกศินี โสภาไฮ", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            4: { responsibleHospital: "นางลำปาง  กำหอม", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกรองจิต  วลัยศรี", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            5: { responsibleHospital: "นางขวัญฤดี ไชยลาภ", responsiblePHO: "นางเกศินี โสภาไฮ", supervisorHospital: "พญ.ณัฎฐิยา ประวันเนา /พรสุวรรณ", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            6: { responsibleHospital: "น.ส.สุวรินทร์ สุทธิประภา", responsiblePHO: "นางเกศินี โสภาไฮ", supervisorHospital: "ทพญ.ปิยนาถ  แก้วบัวพันธ์", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            7: { responsibleHospital: "นางทัดจันทร์ มะเสนะ", responsiblePHO: "พรรณทิวา", supervisorHospital: "ทพญ.ปิยนาถ  แก้วบัวพันธ์", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            8: { responsibleHospital: "นายยุทธชัย  จิณฤทธิ์", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            9: { responsibleHospital: "นางชุติมา  มาตผล", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            10: { responsibleHospital: "น.ส.พัชรินทร์ ใคร่นุ่นนา", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            11: { responsibleHospital: "น.ส.พรนารายณ์ วิศิษฏ์ศิลป์", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            12: { responsibleHospital: "นางกาญจน์วจี จตุเทน", responsiblePHO: "นายธานี  ศรีสองเมือง", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            13: { responsibleHospital: "นายวรวิทย์ คำทัพ//นายทวี  แสนสนอง//น.ส.พรนารายณ์ วิศิษฏ์ศิลป์", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "พญ.ปารณัท พรมศิริ", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            14: { responsibleHospital: "นางเบญจวรรณ  สาสิทธิ์", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            15: { responsibleHospital: "นางเบญจวรรณ  สาสิทธิ์", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            16: { responsibleHospital: "นางเบญจวรรณ  สาสิทธิ์", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            17: { responsibleHospital: "นางเพ็ญศรี จำปาเทศ", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกรรณิการ์  ชายพรม", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            18: { responsibleHospital: "นางเพ็ญศรี จำปาเทศ", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกรรณิการ์  ชายพรม", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            19: { responsibleHospital: "นางเพ็ญศรี จำปาเทศ", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกรรณิการ์  ชายพรม", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            20: { responsibleHospital: "นางเพ็ญศรี จำปาเทศ", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกรรณิการ์  ชายพรม", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            21: { responsibleHospital: "นางเพ็ญศรี จำปาเทศ", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกรรณิการ์  ชายพรม", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            22: { responsibleHospital: "น.ส.พัชรินทร์ พรมดอนก่อ//นายทวี  แสนสนอง", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "พญ.ปารณัท พรมศิริ", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            23: { responsibleHospital: "น.ส.อรอนงค์ ดำขำ", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            24: { responsibleHospital: "นางอุบลรัตน์ กาญจนประดิษฐ์", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            25: { responsibleHospital: "นางอุบลรัตน์ กาญจนประดิษฐ์", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            26: { responsibleHospital: "น.ส.พรนารายณ์ วิศิษฏ์ศิลป์", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            27: { responsibleHospital: "นายพรจิตติ  เผ่าภูธร//นายยุทธชัย  จิณฤทธิ์", responsiblePHO: "นายธานี  ศรีสองเมือง", supervisorHospital: "นางกรองจิต  วลัยศรี//นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            28: { responsibleHospital: "นายพรจิตติ  เผ่าภูธร//นายยุทธชัย  จิณฤทธิ์", responsiblePHO: "นายธานี  ศรีสองเมือง", supervisorHospital: "นางกรองจิต  วลัยศรี//นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            29: { responsibleHospital: "นายจักรพงษ์  แหล่งสท้าน", responsiblePHO: "นางทิพย์ไทย ประทุมภักดิ์", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            30: { responsibleHospital: "นายจักรพงษ์  แหล่งสท้าน", responsiblePHO: "นางทิพย์ไทย ประทุมภักดิ์", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            31: { responsibleHospital: "นางกาญจน์วจี จตุเทน", responsiblePHO: "นางเกษพร สุริโย", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            32: { responsibleHospital: "นางชุติมา  มาตผล", responsiblePHO: "นางเกษพร สุริโย", supervisorHospital: "พญ.จุฬาภรณ์  สอนสุภาพ", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            33: { responsibleHospital: "น.ส.อรอนงค์ ดำขำ", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            34: { responsibleHospital: "นางเพ็ญศรี จำปาเทศ", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกรรณิการ์  ชายพรม", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            35: { responsibleHospital: "น.ส.หัทยา หงษ์จันทร์//นายทวี แสนสนอง", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "พญ.ปารณัท พรมศิริ", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            36: { responsibleHospital: "นายอภิวัฒน์  ปัจมนต์", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "พญ.อรอนงค์ พลโคกก่อง", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            37: { responsibleHospital: "นางกรรณิการ์  ชายพรม", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "นางกรรณิการ์  ชายพรม", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            38: { responsibleHospital: "นางกรรณิการ์  ชายพรม", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "นางกรรณิการ์  ชายพรม", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            39: { responsibleHospital: "ภญ.ภัทรจาริน เอี่ยมทราย", responsiblePHO: "นางทิพย์ไทย ประทุมภักดิ์", supervisorHospital: "ภญ.พัชริยา โทนหงษา", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            40: { responsibleHospital: "นางนริศรา พันธะไชย", responsiblePHO: "นางเกศินี โสภาไฮ", supervisorHospital: "พญ.ณัฎฐิยา ประวันเนา /พรสุวรรณ", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            41: { responsibleHospital: "น.ส.สุภาวิณี ราชสีห์หลวง", responsiblePHO: "นางทิพย์ไทย ประทุมภักดิ์", supervisorHospital: "น.ส.วัชรากรณ์ ธรรมขันธ์", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            42: { responsibleHospital: "น.ส.ขวัญฤดี มานะดี", responsiblePHO: "นางทิพย์ไทย ประทุมภักดิ์", supervisorHospital: "น.ส.วัชรากรณ์ ธรรมขันธ์", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            43: { responsibleHospital: "นางมนฤดี แก้วฮ่องคำ", responsiblePHO: "นางทิพย์ไทย ประทุมภักดิ์", supervisorHospital: "น.ส.วัชรากรณ์ ธรรมขันธ์", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            44: { responsibleHospital: "น.ส.วธัญญา บุตมะ", responsiblePHO: "นางทิพย์ไทย ประทุมภักดิ์", supervisorHospital: "น.ส.วัชรากรณ์ ธรรมขันธ์", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            45: { responsibleHospital: "นางลำปาง  กำหอม", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกรองจิต  วลัยศรี", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            46: { responsibleHospital: "นางลำปาง  กำหอม", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกรองจิต  วลัยศรี", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            47: { responsibleHospital: "นางลำปาง  กำหอม", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกรองจิต  วลัยศรี", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            48: { responsibleHospital: "นางลำปาง  กำหอม", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกรองจิต  วลัยศรี", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            49: { responsibleHospital: "นางวารี  โฆษิต", responsiblePHO: "นางเกศินี โสภาไฮ", supervisorHospital: "นพ.สุชาติ  โกมินทร์", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            50: { responsibleHospital: "น.ส.สุภาพร โคตรสมบัติ//นายทวี  แสนสนอง", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "พญ.อรอนงค์ พลโคกก่อง", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            51: { responsibleHospital: "นายทวี แสนสนอง//น.ส.ชนานันทร์ มณีกัญย์//น.ส.หทัยรัตน์ ลือชัยราม", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "พญ.อรอนงค์ พลโคกก่อง", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            52: { responsibleHospital: "นางเพ็ญศรี จำปาเทศ/น.ส.กฤติยา โพธิจักร", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกรรณิการ์  ชายพรม", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            53: { responsibleHospital: "นางกรรณิการ์  ชายพรม", responsiblePHO: "นางเกษพร สุริโย", supervisorHospital: "นางกรรณิการ์  ชายพรม", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            54: { responsibleHospital: "นางศิรินภา ราญมีชัย//น.ส.เจียรไน วรหาญ//น.ส.พรรณิพา แก้วตั้งขึ้น", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "พญ.มาริสา ปาละจูม", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            55: { responsibleHospital: "น.ส.นนทรัตน์ ฤทธิมนตรี", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            56: { responsibleHospital: "น.ส.พรนารายณ์ วิศิษฏ์ศิลป์", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            57: { responsibleHospital: "น.ส.พรรณิพา แก้วตั้งขึ้น//นางปริชาติ อ่อนพุทธา", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "พญ.ภัทราวดี จันทร์เจริญ", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            58: { responsibleHospital: "น.ส.เจียรไน วรหาญ//นางปริชาติ อ่อนพุทธา", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "พญ.มาริสา ปาละจูม", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            59: { responsibleHospital: "นายพรจิตติ  เผ่าภูธร", responsiblePHO: "นายธานี  ศรีสองเมือง", supervisorHospital: "นางกรองจิต  วลัยศรี", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            60: { responsibleHospital: "นางศิรินภา ราญมีชัย", responsiblePHO: "น.ส.พรรณทิวา โพธิ์สุข", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            61: { responsibleHospital: "นายวรวิทย์ คำทัพ", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "นายทวี แสนสนอง", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            62: { responsibleHospital: "นายทวี แสนสนอง", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "พญ.ปารณัท พรมศิริ", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            63: { responsibleHospital: "น.ส.พรนารายณ์ วิศิษฏ์ศิลป์", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "นางกาญจน์วจี จตุเทน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            64: { responsibleHospital: "นายทวี แสนสนอง", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "พญ.ปารณัท พรมศิริ", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            65: { responsibleHospital: "นายยุทธชัย  จิณฤทธิ์//นางกรรณิการ์  ชายพรม", responsiblePHO: "นายธานี  ศรีสองเมือง", supervisorHospital: "นางกาญจน์วจี จตุเทน//นางสายนิน  ชินบุตร", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            66: { responsibleHospital: "นางสุวิสาห์  แหวนครุธ", responsiblePHO: "นายธานี  ศรีสองเมือง", supervisorHospital: "นายนพดล  สาสิทธิ์", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            67: { responsibleHospital: "นายจักรพงษ์  นันโท", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "นายธงชัย  มาสเหียน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            68: { responsibleHospital: "นางกรรณิการ์  ชายพรม//นางเบญจวรรณ  สาสิทธิ์//นางศิริญา เเสงเส้น//นางศิรินภา ราญมีชัย//นายณัฐพัชร์ มะธิปิไข", responsiblePHO: "นางเกษพร สุริโย", supervisorHospital: "พญ.จุฬาภรณ์  สอนสุภาพ", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            69: { responsibleHospital: "นายณัฐพัชร์ มะธิปิไข//นายธงชัย  มาสเหียน", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "นพ.จักรพงษ์  วุ้นสีแซง", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            70: { responsibleHospital: "นายจักรพงษ์  นันโท//นายธงชัย  มาสเหียน", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "นายธงชัย  มาสเหียน", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            71: { responsibleHospital: "นางปทิตตา นิลส์สัน", responsiblePHO: "นายธานี  ศรีสองเมือง", supervisorHospital: "นายนพดล  สาสิทธิ์", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            72: { responsibleHospital: "นายชาญชัย  พิมพ์ดี", responsiblePHO: "นายธานี  ศรีสองเมือง", supervisorHospital: "นพ.บุญมี โพธิ์สนาม", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            73: { responsibleHospital: "นางรัชนีวรรณ  พลเยี่ยม", responsiblePHO: "", supervisorHospital: "พญ.ประภัสสร แจ่มนภา", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            74: { responsibleHospital: "นายนพดล  สาสิทธิ์", responsiblePHO: "", supervisorHospital: "นายนพดล  สาสิทธิ์", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            75: { responsibleHospital: "น.ส.เดือนเพ็ญ วิจิตขะจี", responsiblePHO: "", supervisorHospital: "นายนพดล  สาสิทธิ์", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            76: { responsibleHospital: "นายศรัญญู  ทิพประมวล", responsiblePHO: "", supervisorHospital: "นายนพดล  สาสิทธิ์", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            77: { responsibleHospital: "น.ส.กันตาภารัตน์ อ้วนศรีเมือง//ภญ.พัชริยา โทนหงษา", responsiblePHO: "นายจรัญญู  ทองเอนก", supervisorHospital: "ภญ.พัชริยา โทนหงษา", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            78: { responsibleHospital: "ภก.เจตน์สฤษฎิ์ เสมารัมย์", responsiblePHO: "นางทิพย์ไทย ประทุมภักดิ์", supervisorHospital: "ภญ.พัชริยา โทนหงษา", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            79: { responsibleHospital: "ภญ.อัชฌามณี ศรีหะวงค์//นางมนฤดี แก้วฮ่องคำ", responsiblePHO: "นางทิพย์ไทย ประทุมภักดิ์", supervisorHospital: "ภญ.พัชริยา โทนหงษา//น.ส.วัชรากรณ์ ธรรมขันธ์", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            80: { responsibleHospital: "ภญ.อัชฌามณี ศรีหะวงค์//น.ส.จารุวรรณ สุวงค์ทา", responsiblePHO: "นางทิพย์ไทย ประทุมภักดิ์", supervisorHospital: "ภญ.พัชริยา โทนหงษา", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            81: { responsibleHospital: "ภญ.พัชริยา โทนหงษา", responsiblePHO: "นางทิพย์ไทย ประทุมภักดิ์", supervisorHospital: "ภญ.พัชริยา โทนหงษา", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+            82: { responsibleHospital: "ภญ.อัชฌามณี ศรีหะวงค์//น.ส.ทิพวรรณ เตียงชัย//นายจักรพงษ์  แหล่งสท้าน", responsiblePHO: "นางทิพย์ไทย ประทุมภักดิ์", supervisorHospital: "ภญ.พัชริยา โทนหงษา//นางกาญจน์วจี จตุเทน//น.ส.ทิพวรรณ เตียงชัย", supervisorPHO: "นายธานี  ศรีสองเมือง" },
+        };
+
+        // Initialize monthly data
+        let monthlyData = {};
+        const STORAGE_KEY = 'kpi_selaphum_2569';
+
+        // ===== Google Sheets Configuration =====
+        // หลังจาก Deploy Google Apps Script แล้ว ให้นำ URL มาวางที่นี่
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby_AJzkZ6VIqYJTR2ov8ei53d8A12y8472xtcmpM1bXCePvVwp3QtLFfGvn0pt3Jc1D/exec'; // << วาง URL ที่ได้จาก Google Apps Script ที่นี่
+        const SHEET_ID = '16rt6MCNZLIDgS3scM79LmQ_gWAZlRpOPgQ-3xkoAnWM';
+        
+        let isSyncing = false;
+        let syncStatus = 'offline'; // 'online', 'offline', 'syncing', 'error'
+
+        // ===== Google Sheets Functions =====
+        
+        // ตรวจสอบว่าตั้งค่า Google Sheets แล้วหรือยัง
+        function isGoogleSheetsConfigured() {
+            return GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL.length > 0;
+        }
+
+        // ดึงข้อมูลจาก Google Sheets
+        async function loadFromGoogleSheets() {
+            if (!isGoogleSheetsConfigured()) {
+                console.log('Google Sheets not configured');
+                return false;
+            }
+
+            try {
+                updateSyncStatus('syncing');
+                const response = await fetch(GOOGLE_SCRIPT_URL);
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    // แปลงข้อมูลจาก Sheets เป็น monthlyData format
+                    Object.keys(result.data).forEach(kpiId => {
+                        const sheetData = result.data[kpiId];
+                        if (sheetData.months) {
+                            monthlyData[kpiId] = sheetData.months;
+                        }
+                    });
+                    
+                    // บันทึกลง localStorage เป็น backup
+                    saveData();
+                    updateSyncStatus('online');
+                    showToast('โหลดข้อมูลจาก Google Sheets สำเร็จ', 'success');
+                    return true;
+                } else {
+                    throw new Error(result.error || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('Error loading from Google Sheets:', error);
+                updateSyncStatus('error');
+                showToast('ไม่สามารถโหลดข้อมูลจาก Google Sheets ได้', 'error');
+                return false;
+            }
+        }
+
+        // บันทึกข้อมูลไป Google Sheets
+        async function saveToGoogleSheets(kpiId = null) {
+            if (!isGoogleSheetsConfigured()) {
+                console.log('Google Sheets not configured, saving to localStorage only');
+                return false;
+            }
+
+            try {
+                updateSyncStatus('syncing');
+                
+                let dataToSave;
+                
+                if (kpiId) {
+                    // บันทึก KPI เดียว
+                    const kpi = kpiData.find(k => k.id === parseInt(kpiId));
+                    if (!kpi) return false;
+                    
+                    dataToSave = {
+                        id: kpi.id,
+                        name: kpi.name,
+                        strategy: kpi.strategy,
+                        target: kpi.target,
+                        unit: kpi.unit,
+                        months: monthlyData[kpi.id] || Array(12).fill(null),
+                        lowerIsBetter: kpi.lowerIsBetter
+                    };
+                } else {
+                    // บันทึกทุก KPI
+                    dataToSave = {
+                        kpiList: kpiData.map(kpi => ({
+                            id: kpi.id,
+                            name: kpi.name,
+                            strategy: kpi.strategy,
+                            target: kpi.target,
+                            unit: kpi.unit,
+                            months: monthlyData[kpi.id] || Array(12).fill(null),
+                            lowerIsBetter: kpi.lowerIsBetter
+                        }))
+                    };
+                }
+
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dataToSave),
+                    mode: 'no-cors' // จำเป็นสำหรับ Google Apps Script
+                });
+
+                // เนื่องจาก no-cors mode ไม่สามารถอ่าน response ได้
+                // ถือว่าสำเร็จถ้าไม่มี error
+                updateSyncStatus('online');
+                return true;
+                
+            } catch (error) {
+                console.error('Error saving to Google Sheets:', error);
+                updateSyncStatus('error');
+                return false;
+            }
+        }
+
+        // บันทึกข้อมูลทั้งหมดไป Google Sheets
+        async function syncAllToGoogleSheets() {
+            if (isSyncing) {
+                showToast('กำลัง Sync อยู่ กรุณารอสักครู่', 'warning');
+                return;
+            }
+
+            isSyncing = true;
+            showToast('กำลัง Sync ข้อมูลทั้งหมดไป Google Sheets...', 'info');
+            
+            const success = await saveToGoogleSheets();
+            
+            isSyncing = false;
+            
+            if (success) {
+                showToast('Sync ข้อมูลทั้งหมดไป Google Sheets สำเร็จ!', 'success');
+            } else {
+                showToast('Sync ไม่สำเร็จ กรุณาตรวจสอบการตั้งค่า', 'error');
+            }
+        }
+
+        // อัปเดตสถานะ Sync UI
+        function updateSyncStatus(status) {
+            syncStatus = status;
+            const indicator = document.getElementById('syncIndicator');
+            if (!indicator) return;
+            
+            const statusConfig = {
+                'online': { color: '#10b981', text: '● เชื่อมต่อ Google Sheets', icon: '☁️' },
+                'offline': { color: '#94a3b8', text: '○ Offline Mode', icon: '💾' },
+                'syncing': { color: '#f59e0b', text: '↻ กำลัง Sync...', icon: '🔄' },
+                'error': { color: '#ef4444', text: '✕ เชื่อมต่อไม่ได้', icon: '⚠️' }
+            };
+            
+            const config = statusConfig[status] || statusConfig['offline'];
+            indicator.innerHTML = `<span style="color:${config.color};font-size:12px;">${config.icon} ${config.text}</span>`;
+        }
+
+        // Load from localStorage
+        function loadData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                monthlyData = JSON.parse(saved);
+            } else {
+                // Initialize empty data
+                kpiData.forEach(kpi => {
+                    monthlyData[kpi.id] = Array(12).fill(null);
+                });
+            }
+        }
+
+        // Save to localStorage
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(monthlyData));
+        }
+
+        // Strategy names
+        const strategyNames = {
+            1: "PP&P Excellence",
+            2: "Service Excellence",
+            3: "People Excellence",
+            4: "Governance Excellence",
+            5: "Health Economic"
+        };
+
+        const strategyColors = {
+            1: "#0ea5e9",
+            2: "#10b981",
+            3: "#f59e0b",
+            4: "#8b5cf6",
+            5: "#ec4899"
+        };
+
+        const months = ['ต.ค.', 'พ.ย.', 'ธ.ค.', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.'];
+
+        // Charts
+        let pieChart, barChart;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            // โหลดจาก localStorage ก่อน (เพื่อให้แสดงผลเร็ว)
+            loadData();
+            initCharts();
+            updateDashboard();
+            renderEntryList();
+            renderReportTable();
+            
+            // ถ้าตั้งค่า Google Sheets แล้ว ให้โหลดข้อมูลจาก Sheets
+            if (isGoogleSheetsConfigured()) {
+                updateSyncStatus('syncing');
+                const loaded = await loadFromGoogleSheets();
+                if (loaded) {
+                    // อัปเดต UI หลังโหลดข้อมูลจาก Sheets
+                    updateDashboard();
+                    renderEntryList();
+                    renderReportTable();
+                }
+            } else {
+                updateSyncStatus('offline');
+            }
+        });
+
+        // Switch tabs
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'entry') {
+                renderEntryList();
+            } else if (tabName === 'report') {
+                renderReportTable();
+            } else if (tabName === 'dashboard') {
+                updateDashboard();
+            } else if (tabName === 'card') {
+                initCARDTab();
+            }
+        }
+
+        // Initialize charts
+        function initCharts() {
+            // Pie Chart
+            const pieCtx = document.getElementById('pieChart').getContext('2d');
+            pieChart = new Chart(pieCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['ผ่านเกณฑ์', 'ไม่ผ่านเกณฑ์', 'รอข้อมูล'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#10b981', '#ef4444', '#6b7280'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#94a3b8', padding: 20, font: { size: 12 } }
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+
+            // Bar Chart
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.values(strategyNames),
+                    datasets: [{
+                        label: 'ร้อยละผ่านเกณฑ์',
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: Object.values(strategyColors),
+                        borderRadius: 8,
+                        barThickness: 30
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            max: 100,
+                            grid: { color: '#e2e8f0' },
+                            ticks: { color: '#64748b' }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: '#64748b', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // เกณฑ์การให้คะแนนจาก สสจ.ร้อยเอ็ด ปี 2569 (คะแนน 1-5)
+        const scoringCriteria = {
+            1: {scores:[35,30,25,20,15], lower:true},
+            2: {scores:[55,60,65,70,75], lower:false},
+            3: {scores:[72,76,80,84,88], lower:false},
+            4: {scores:[10,20,30,40,50], lower:false},
+            6: {scores:[20,25,30,35,40], lower:false},
+            7: {scores:[17.5,22.5,27.5,32.5,37.5], lower:false},
+            8: {scores:[90,92,94,96,98], lower:false},
+            9: {scores:[50,60,70,80,90], lower:false},
+            10: {scores:[65,70,75,80,85], lower:false},
+            11: {scores:[10,15,20,25,30], lower:false},
+            12: {scores:[1,2,3,4,5], lower:false},
+            13: {scores:[1,2,3,4,5], lower:false},
+            14: {scores:[61,64,67,70,73], lower:false},
+            15: {scores:[86,88,90,92,94], lower:false},
+            17: {scores:[890,830,770,710,650], lower:true},
+            18: {scores:[2020,1850,1680,1510,1340], lower:true},
+            19: {scores:[20,25,30,35,40], lower:false},
+            20: {scores:[56,60,64,68,72], lower:false},
+            21: {scores:[0.90,1.05,1.20,1.35,1.50], lower:false},
+            22: {scores:[5,4.5,4,3.5,3], lower:true},
+            24: {scores:[75,80,85,90,95], lower:false},
+            25: {scores:[82,84,86,88,90], lower:false},
+            26: {scores:[1,2,3,4,5], lower:false},
+            27: {scores:[35,40,45,50,55], lower:false},
+            28: {scores:[40,45,50,55,60], lower:false},
+            29: {scores:[1,2,3,4,5], lower:false},
+            30: {scores:[1,2,3,4,5], lower:false},
+            31: {scores:[60,65,70,75,80], lower:false},
+            32: {scores:[1,2,3,4,5], lower:false},
+            33: {scores:[60,65,70,75,80], lower:false},
+            34: {scores:[30,45,60,75,90], lower:false},
+            35: {scores:[10,20,30,40,50], lower:false},
+            37: {scores:[80,82,84,86,88], lower:false},
+            38: {scores:[65,70,75,80,85], lower:false},
+            39: {scores:[60,70,80,90,100], lower:false},
+            40: {scores:[1,2,3,4,5], lower:false},
+            41: {scores:[30,35,40,45,50], lower:false},
+            43: {scores:[3,6,9,12,15], lower:false},
+            44: {scores:[1,2,3,4,5], lower:false},
+            45: {scores:[11.8,10.8,9.8,8.8,7.8], lower:true},
+            46: {scores:[50,55,60,65,70], lower:false},
+            47: {scores:[20,25,30,35,40], lower:false},
+            48: {scores:[20,25,30,35,40], lower:false},
+            49: {scores:[1,2,3,4,5], lower:false},
+            51: {scores:[30,40,50,60,70], lower:false},
+            52: {scores:[1,2,3,4,5], lower:false},
+            55: {scores:[15,20,25,30,35], lower:false},
+            56: {scores:[30,35,40,45,50], lower:false},
+            59: {scores:[55,60,65,70,75], lower:false},
+            60: {scores:[20,30,40,50,60], lower:false},
+            61: {scores:[30,35,40,45,50], lower:false},
+            62: {scores:[20,40,60,80,100], lower:false},
+            63: {scores:[1,2,3,4,5], lower:false},
+            64: {scores:[1,2,3,4,5], lower:false},
+            66: {scores:[1,2,3,4,5], lower:false},
+            67: {scores:[1,2,3,4,5], lower:false},
+            68: {scores:[10,15,20,25,30], lower:false},
+            69: {scores:[1,2,3,4,5], lower:false},
+            70: {scores:[1,2,3,4,5], lower:false},
+            72: {scores:[1,2,3,4,5], lower:false},
+            73: {scores:[1,2,3,4,5], lower:false},
+            74: {scores:[7,6,5,3,1], lower:true},
+            77: {scores:[1,2,3,4,5], lower:false},
+            78: {scores:[1,2,3,4,5], lower:false},
+            79: {scores:[1,2,3,4,5], lower:false},
+            80: {scores:[1,2,3,4,5], lower:false},
+            81: {scores:[1,2,3,4,5], lower:false},
+            82: {scores:[1,2,3,4,5], lower:false}
+        };
+
+        // คำนวณคะแนน 1-5 จากเกณฑ์ สสจ.ร้อยเอ็ด
+        function calculateScore(kpiId, value) {
+            if (value === null || value === undefined || value === '') return null;
+            const criteria = scoringCriteria[kpiId];
+            if (!criteria || !criteria.scores) return null;
+            const v = parseFloat(value);
+            const s = criteria.scores; // [score1, score2, score3, score4, score5]
+            
+            if (criteria.lower) {
+                // ค่าต่ำกว่าดีกว่า: s[0] > s[1] > ... > s[4]
+                if (v > s[0]) return 0; // ต่ำกว่าเกณฑ์ระดับ 1
+                for (let i = 4; i >= 0; i--) {
+                    if (v <= s[i]) return i + 1;
+                }
+                return 1;
+            } else {
+                // ค่าสูงกว่าดีกว่า: s[0] < s[1] < ... < s[4]
+                if (v < s[0]) return 0; // ต่ำกว่าเกณฑ์ระดับ 1
+                for (let i = 4; i >= 0; i--) {
+                    if (v >= s[i]) return i + 1;
+                }
+                return 0;
+            }
+        }
+
+        // สีตามระดับคะแนน
+        function getScoreColor(score) {
+            if (score === null) return '#94a3b8';
+            if (score >= 5) return '#059669';
+            if (score >= 4) return '#10b981';
+            if (score >= 3) return '#f59e0b';
+            if (score >= 2) return '#f97316';
+            if (score >= 1) return '#ef4444';
+            return '#dc2626';
+        }
+
+        function getScoreBadge(score) {
+            if (score === null) return '<span style="color:#94a3b8;">-</span>';
+            const color = getScoreColor(score);
+            const stars = '★'.repeat(Math.min(score, 5)) + '☆'.repeat(Math.max(0, 5 - score));
+            return `<span style="font-weight:700;color:${color};">${score}</span> <span style="font-size:10px;color:${color};">${stars}</span>`;
+        }
+
+        // Check if KPI passed
+        function isPassed(kpi, value) {
+            if (value === null || value === undefined || value === '') return null;
+            if (kpi.lowerIsBetter) {
+                return parseFloat(value) <= kpi.target;
+            }
+            return parseFloat(value) >= kpi.target;
+        }
+
+        // Update dashboard
+        function updateDashboard() {
+            const month = parseInt(document.getElementById('dashMonth').value);
+            const strategy = document.getElementById('dashStrategy').value;
+            const search = document.getElementById('searchKPI').value.toLowerCase();
+
+            let filtered = kpiData.filter(kpi => {
+                const matchStrategy = strategy === 'all' || kpi.strategy === parseInt(strategy);
+                const matchSearch = kpi.name.toLowerCase().includes(search);
+                return matchStrategy && matchSearch;
+            });
+
+            let passed = 0, failed = 0, pending = 0;
+            filtered.forEach(kpi => {
+                const values = monthlyData[kpi.id] || Array(12).fill(null);
+                const validValues = values.filter(v => v !== null);
+                const latestValue = validValues.length > 0 ? validValues[validValues.length - 1] : null;
+                const status = latestValue !== null ? isPassed(kpi, latestValue) : null;
+                if (status === true) passed++;
+                else if (status === false) failed++;
+                else pending++;
+            });
+
+            // Update stats
+            document.getElementById('statTotal').textContent = filtered.length;
+            document.getElementById('statPassed').textContent = passed;
+            document.getElementById('statFailed').textContent = failed;
+            document.getElementById('statPending').textContent = pending;
+
+            // คำนวณคะแนนเฉลี่ยถ่วงน้ำหนัก
+            let totalWeightedScore = 0;
+            let totalWeight = 0;
+            let scoredCount = 0;
+            filtered.forEach(kpi => {
+                const values = monthlyData[kpi.id] || Array(12).fill(null);
+                const validValues = values.filter(v => v !== null);
+                const latestValue = validValues.length > 0 ? validValues[validValues.length - 1] : null;
+                const score = calculateScore(kpi.id, latestValue);
+                if (score !== null && score > 0) {
+                    totalWeightedScore += score * kpi.weight;
+                    totalWeight += kpi.weight;
+                    scoredCount++;
+                }
+            });
+            const avgWeightedScore = totalWeight > 0 ? (totalWeightedScore / totalWeight) : null;
+            document.getElementById('statWeightedScore').textContent = avgWeightedScore !== null ? avgWeightedScore.toFixed(2) : '-';
+            document.getElementById('statWeightedScore').style.color = getScoreColor(avgWeightedScore !== null ? Math.round(avgWeightedScore) : null);
+            document.getElementById('statScoreDetail').textContent = avgWeightedScore !== null ? `(${scoredCount} ตัวชี้วัด, น้ำหนักรวม ${totalWeight.toFixed(1)})` : '';
+
+            // Update pie chart
+            pieChart.data.datasets[0].data = [passed, failed, pending];
+            pieChart.update();
+
+            // Calculate strategy performance
+            const strategyPerf = {};
+            [1, 2, 3, 4, 5].forEach(s => {
+                const items = kpiData.filter(k => k.strategy === s);
+                let sPassed = 0;
+                items.forEach(kpi => {
+                    const values = monthlyData[kpi.id] || Array(12).fill(null);
+                    const validValues = values.filter(v => v !== null);
+                    const latestValue = validValues.length > 0 ? validValues[validValues.length - 1] : null;
+                    if (latestValue !== null && isPassed(kpi, latestValue) === true) sPassed++;
+                });
+                strategyPerf[s] = items.length > 0 ? Math.round((sPassed / items.length) * 100) : 0;
+            });
+
+            // Update bar chart
+            barChart.data.datasets[0].data = Object.values(strategyPerf);
+            barChart.update();
+
+            // Update strategy list
+            const strategyList = document.getElementById('strategyList');
+            strategyList.innerHTML = '';
+            [1, 2, 3, 4, 5].forEach(s => {
+                const items = kpiData.filter(k => k.strategy === s);
+                const perf = strategyPerf[s];
+                strategyList.innerHTML += `
+                    <div class="strategy-item" style="border-color: ${strategyColors[s]}">
+                        <div class="strategy-item-info">
+                            <span class="strategy-badge strategy-${s}">ยุทธศาสตร์ ${s}</span>
+                            <div>
+                                <div class="strategy-item-name">${strategyNames[s]}</div>
+                                <div class="strategy-item-count">${items.length} ตัวชี้วัด</div>
+                            </div>
+                        </div>
+                        <div class="strategy-item-score" style="color: ${strategyColors[s]}">${perf}%</div>
+                    </div>
+                `;
+            });
+
+            // Render KPI detail table in dashboard
+            const dashTableBody = document.getElementById('dashboardTableBody');
+            dashTableBody.innerHTML = filtered.map(kpi => {
+                const values = monthlyData[kpi.id] || Array(12).fill(null);
+                const validValues = values.filter(v => v !== null);
+                
+                // ใช้ผลงานล่าสุดแทนเดือนที่เลือก
+                const latestValue = validValues.length > 0 ? validValues[validValues.length - 1] : null;
+                const status = latestValue !== null ? isPassed(kpi, latestValue) : null;
+                
+                let statusBadge = '';
+                if (status === true) {
+                    statusBadge = '<span class="status-badge status-passed">✓ ผ่านเกณฑ์</span>';
+                } else if (status === false) {
+                    statusBadge = '<span class="status-badge status-failed">✗ ไม่ผ่าน</span>';
+                } else {
+                    statusBadge = '<span class="status-badge status-pending">- รอข้อมูล</span>';
+                }
+
+                // Calculate progress based on latest value
+                let progress = 0;
+                if (latestValue !== null && kpi.target > 0) {
+                    if (kpi.lowerIsBetter) {
+                        // สำหรับตัวชี้วัดที่ค่าต่ำกว่าดีกว่า
+                        if (latestValue <= kpi.target) {
+                            progress = 100; // ผ่านเกณฑ์ = 100%
+                        } else {
+                            progress = Math.max(0, (kpi.target / latestValue) * 100);
+                        }
+                    } else {
+                        progress = Math.min(100, (latestValue / kpi.target) * 100);
+                    }
+                }
+
+                let progressClass = 'danger';
+                if (status === true) progressClass = 'good';
+                else if (progress >= 70) progressClass = 'warning';
+
+                return `
+                    <tr>
+                        <td style="text-align: center;">${kpi.id}</td>
+                        <td><span class="strategy-badge strategy-${kpi.strategy}">${strategyNames[kpi.strategy]}</span></td>
+                        <td class="kpi-name" onclick="showKPIDetail(${kpi.id})" style="cursor:pointer;">
+                            <div class="kpi-name-text" title="${kpi.name}">${kpi.name}</div>
+                        </td>
+                        <td style="text-align: center;">${kpi.target} <span style="font-size:11px;color:#64748b;">${kpi.unit}</span></td>
+                        <td style="text-align: center; font-weight: 600; color: ${status === true ? '#059669' : status === false ? '#dc2626' : '#94a3b8'};">
+                            ${latestValue !== null ? latestValue : '-'}
+                        </td>
+                        <td style="text-align: center;">${getScoreBadge(calculateScore(kpi.id, latestValue))}</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill ${progressClass}" style="width: ${progress}%;"></div>
+                            </div>
+                            <div style="text-align:center;font-size:11px;color:#64748b;margin-top:4px;">${progress.toFixed(0)}%</div>
+                        </td>
+                        <td style="text-align: center;">${statusBadge}</td>
+                        <td style="text-align: center;">
+                            <button class="btn-edit-kpi" onclick="goToEditKPI(${kpi.id})" title="บันทึกข้อมูล">
+                                ✏️ บันทึก
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Go to edit specific KPI
+        function goToEditKPI(kpiId) {
+            // Switch to entry tab
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById('tab-entry').classList.add('active');
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            
+            // Clear filters to show all
+            document.getElementById('entryStrategy').value = 'all';
+            document.getElementById('entrySearch').value = '';
+            
+            // Render and scroll to specific KPI
+            renderEntryList();
+            
+            // Wait for render then scroll
+            setTimeout(() => {
+                const kpiCard = document.getElementById('kpi-card-' + kpiId);
+                if (kpiCard) {
+                    kpiCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    kpiCard.style.animation = 'highlightCard 2s ease';
+                }
+            }, 100);
+        }
+
+        // Render entry list (card-based)
+        function renderEntryList() {
+            const strategy = document.getElementById('entryStrategy').value;
+            const search = document.getElementById('entrySearch').value.toLowerCase();
+            const container = document.getElementById('kpiEntryList');
+            
+            let filtered = kpiData.filter(kpi => {
+                const matchStrategy = strategy === 'all' || kpi.strategy === parseInt(strategy);
+                const matchSearch = kpi.name.toLowerCase().includes(search);
+                return matchStrategy && matchSearch;
+            });
+
+            container.innerHTML = filtered.map(kpi => {
+                const values = monthlyData[kpi.id] || Array(12).fill(null);
+                const validValues = values.filter(v => v !== null);
+                const latestValue = validValues.length > 0 ? validValues[validValues.length - 1] : null;
+                const latestPassed = latestValue !== null ? isPassed(kpi, latestValue) : null;
+                const passedCount = values.filter(v => isPassed(kpi, v) === true).length;
+                const failedCount = values.filter(v => isPassed(kpi, v) === false).length;
+
+                const monthInputs = months.map((m, i) => {
+                    const v = values[i];
+                    const status = isPassed(kpi, v);
+                    let groupClass = '';
+                    let statusText = '-';
+                    let statusClass = 'empty';
+                    
+                    if (v !== null) {
+                        groupClass = 'has-value ' + (status ? 'passed' : 'failed');
+                        statusText = status ? '✓ ผ่าน' : '✗ ไม่ผ่าน';
+                        statusClass = status ? 'passed' : 'failed';
+                    }
+
+                    return `
+                        <div class="kpi-month-input-group ${groupClass}">
+                            <div class="kpi-month-label">${m}${i < 3 ? '68' : '69'}</div>
+                            <input type="number" 
+                                   class="kpi-month-input" 
+                                   value="${v !== null ? v : ''}"
+                                   step="0.01"
+                                   placeholder="-"
+                                   onchange="updateMonthValue(${kpi.id}, ${i}, this.value)">
+                            <div class="kpi-month-status ${statusClass}">${statusText}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="kpi-entry-card" id="kpi-card-${kpi.id}">
+                        <div class="kpi-entry-header">
+                            <div class="kpi-entry-header-top">
+                                <div class="kpi-entry-number">${kpi.id}</div>
+                                <div class="kpi-entry-info">
+                                    <div class="kpi-entry-name">${kpi.name}</div>
+                                    <div class="kpi-entry-meta">
+                                        <div class="kpi-entry-meta-item">
+                                            <span class="strategy-badge strategy-${kpi.strategy}">${strategyNames[kpi.strategy]}</span>
+                                        </div>
+                                        <div class="kpi-entry-meta-item">
+                                            📋 ${kpi.plan}
+                                        </div>
+                                        <div class="kpi-entry-meta-item">
+                                            📊 ${kpi.source}
+                                        </div>
+                                        <div class="kpi-entry-meta-item">
+                                            ⚖️ น้ำหนัก ${kpi.weight}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="kpi-entry-target">
+                                    <div class="kpi-entry-target-label">เป้าหมาย</div>
+                                    <div class="kpi-entry-target-value">${kpi.target}</div>
+                                    <div style="font-size:11px;color:#64748b;">${kpi.unit}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="kpi-entry-body">
+                            <div class="kpi-entry-months">
+                                ${monthInputs}
+                            </div>
+                        </div>
+                        <div class="kpi-entry-footer">
+                            <div class="kpi-entry-summary">
+                                <div class="kpi-entry-summary-item">
+                                    <span class="kpi-entry-summary-label">ผลงานล่าสุด:</span>
+                                    <span class="kpi-entry-summary-value ${latestPassed === true ? 'good' : latestPassed === false ? 'bad' : ''}">${latestValue !== null ? latestValue : '-'}</span>
+                                </div>
+                                <div class="kpi-entry-summary-item">
+                                    <span class="kpi-entry-summary-label">ผลประเมิน:</span>
+                                    <span class="kpi-entry-summary-value ${latestPassed === true ? 'good' : latestPassed === false ? 'bad' : ''}">${latestPassed === true ? '✓ ผ่าน' : latestPassed === false ? '✗ ไม่ผ่าน' : 'รอข้อมูล'}</span>
+                                </div>
+                                <div class="kpi-entry-summary-item">
+                                    <span class="kpi-entry-summary-label">ผ่านเกณฑ์:</span>
+                                    <span class="kpi-entry-summary-value good">${passedCount} เดือน</span>
+                                </div>
+                                <div class="kpi-entry-summary-item">
+                                    <span class="kpi-entry-summary-label">ไม่ผ่าน:</span>
+                                    <span class="kpi-entry-summary-value bad">${failedCount} เดือน</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-secondary" onclick="showKPIDetail(${kpi.id})" style="padding: 8px 16px; font-size: 13px;">
+                                📈 ดูรายละเอียด
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center;padding:60px;color:#64748b;">
+                        <div style="font-size:48px;margin-bottom:16px;">🔍</div>
+                        <div>ไม่พบตัวชี้วัดที่ค้นหา</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Update single month value
+        function updateMonthValue(kpiId, monthIndex, value) {
+            if (!monthlyData[kpiId]) {
+                monthlyData[kpiId] = Array(12).fill(null);
+            }
+            monthlyData[kpiId][monthIndex] = value === '' ? null : parseFloat(value);
+            saveData();
+            renderEntryList();
+            updateDashboard();
+            showToast('บันทึกข้อมูลเรียบร้อยแล้ว', 'success');
+            
+            // Sync to Google Sheets (async, ไม่ต้องรอ)
+            if (isGoogleSheetsConfigured()) {
+                saveToGoogleSheets(kpiId).then(success => {
+                    if (success) {
+                        console.log('Synced KPI ' + kpiId + ' to Google Sheets');
+                    }
+                });
+            }
+        }
+
+        // Render report table
+        function renderReportTable() {
+            const strategy = document.getElementById('reportStrategy').value;
+            const tbody = document.getElementById('reportTableBody');
+            
+            let filtered = kpiData.filter(kpi => {
+                return strategy === 'all' || kpi.strategy === parseInt(strategy);
+            });
+
+            tbody.innerHTML = filtered.map(kpi => {
+                const values = monthlyData[kpi.id] || Array(12).fill(null);
+                
+                // หาผลงานล่าสุดที่มีข้อมูล
+                const validValues = values.filter(v => v !== null);
+                const latestValue = validValues.length > 0 ? validValues[validValues.length - 1] : null;
+                
+                // ประเมินผลจากค่าล่าสุด
+                const latestPassed = latestValue !== null ? isPassed(kpi, latestValue) : null;
+                
+                // สร้าง badge แสดงผลประเมิน
+                let evaluationBadge = '';
+                if (latestPassed === true) {
+                    evaluationBadge = `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#047857;">✓ ผ่าน</span>`;
+                } else if (latestPassed === false) {
+                    evaluationBadge = `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:linear-gradient(135deg,#fee2e2,#fecaca);color:#b91c1c;">✗ ไม่ผ่าน</span>`;
+                } else {
+                    evaluationBadge = `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:linear-gradient(135deg,#f1f5f9,#e2e8f0);color:#64748b;">- รอข้อมูล</span>`;
+                }
+
+                const monthCells = values.map((v, i) => {
+                    if (v === null) return `<td style="text-align:center;color:#94a3b8;">-</td>`;
+                    const passed = isPassed(kpi, v);
+                    const color = passed ? '#059669' : '#dc2626';
+                    return `<td style="text-align:center;color:${color};font-weight:500;">${v}</td>`;
+                }).join('');
+
+                return `
+                    <tr onclick="showKPIDetail(${kpi.id})" style="cursor:pointer;">
+                        <td style="text-align:center;">${kpi.id}</td>
+                        <td class="kpi-name">
+                            <div class="kpi-name-text" title="${kpi.name}">${kpi.name}</div>
+                        </td>
+                        <td style="text-align:center;">${kpi.target}</td>
+                        ${monthCells}
+                        <td style="text-align:center;">${evaluationBadge}</td>
+                        <td style="text-align:center;" onclick="event.stopPropagation();">
+                            <button class="btn-ai-analyze" onclick="generateSingleKPIPrompt(${kpi.id})" title="วิเคราะห์ด้วย AI">
+                                🤖 AI
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Generate AI Prompt for overview analysis
+        function generateAIPrompt(type) {
+            let prompt = '';
+            const currentDate = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+            
+            // Collect all KPI data
+            const kpiSummary = kpiData.map(kpi => {
+                const values = monthlyData[kpi.id] || Array(12).fill(null);
+                const validValues = values.filter(v => v !== null);
+                const avg = validValues.length > 0 ? (validValues.reduce((a, b) => a + b, 0) / validValues.length).toFixed(2) : null;
+                const passedMonths = values.filter(v => isPassed(kpi, v) === true).length;
+                const trend = validValues.length >= 2 ? (validValues[validValues.length - 1] - validValues[0]) : null;
+                
+                return {
+                    id: kpi.id,
+                    name: kpi.name,
+                    strategy: strategyNames[kpi.strategy],
+                    target: kpi.target,
+                    unit: kpi.unit,
+                    avg: avg,
+                    passedMonths: passedMonths,
+                    totalMonths: validValues.length,
+                    trend: trend,
+                    values: values,
+                    lowerIsBetter: kpi.lowerIsBetter || false
+                };
+            });
+
+            // Calculate strategy summaries
+            const strategySummary = [1, 2, 3, 4, 5].map(s => {
+                const items = kpiSummary.filter(k => k.strategy === strategyNames[s]);
+                const avgPass = items.filter(k => k.avg !== null && (k.lowerIsBetter ? parseFloat(k.avg) <= k.target : parseFloat(k.avg) >= k.target)).length;
+                return {
+                    name: strategyNames[s],
+                    total: items.length,
+                    passed: avgPass,
+                    rate: items.length > 0 ? ((avgPass / items.length) * 100).toFixed(1) : 0
+                };
+            });
+
+            // Problem KPIs
+            const problemKPIs = kpiSummary.filter(k => {
+                if (k.avg === null) return false;
+                return k.lowerIsBetter ? parseFloat(k.avg) > k.target : parseFloat(k.avg) < k.target;
+            }).slice(0, 10);
+
+            if (type === 'overview') {
+                prompt = `คุณเป็นผู้เชี่ยวชาญด้านการวิเคราะห์ KPI สาธารณสุข กรุณาวิเคราะห์ผลการดำเนินงาน KPI ของโรงพยาบาลเสลภูมิ ปีงบประมาณ 2569 ดังนี้:
+
+📊 ข้อมูลภาพรวม (ณ วันที่ ${currentDate})
+- จำนวน KPI ทั้งหมด: ${kpiData.length} ตัวชี้วัด
+- แบ่งตามยุทธศาสตร์:
+${strategySummary.map(s => `  • ${s.name}: ${s.total} ตัว (ผ่านเกณฑ์ ${s.passed} ตัว = ${s.rate}%)`).join('\n')}
+
+📈 สรุปผลงานตามยุทธศาสตร์:
+${strategySummary.map(s => `${s.name}: ผ่าน ${s.rate}%`).join(', ')}
+
+⚠️ KPI ที่ยังไม่ผ่านเกณฑ์ (${problemKPIs.length} ตัว):
+${problemKPIs.map(k => `- ${k.name} (เป้า: ${k.target}, เฉลี่ย: ${k.avg})`).join('\n')}
+
+กรุณาวิเคราะห์:
+1. สรุปภาพรวมผลการดำเนินงาน
+2. จุดแข็งที่ควรรักษา
+3. จุดอ่อนที่ต้องปรับปรุง
+4. ข้อเสนอแนะเชิงนโยบายสำหรับผู้บริหาร
+5. แผนการดำเนินงานในไตรมาสถัดไป`;
+
+            } else if (type === 'strategy') {
+                prompt = `คุณเป็นผู้เชี่ยวชาญด้านการวิเคราะห์ยุทธศาสตร์สาธารณสุข กรุณาวิเคราะห์เปรียบเทียบผลงานตามยุทธศาสตร์ของ รพ.เสลภูมิ:
+
+📊 ผลงานแต่ละยุทธศาสตร์:
+
+${strategySummary.map(s => {
+    const items = kpiSummary.filter(k => k.strategy === s.name);
+    return `🎯 ${s.name}
+- จำนวน KPI: ${s.total} ตัว
+- ผ่านเกณฑ์: ${s.passed} ตัว (${s.rate}%)
+- ตัวชี้วัดหลัก:
+${items.slice(0, 3).map(k => `  • ${k.name}: เฉลี่ย ${k.avg || '-'} (เป้า ${k.target})`).join('\n')}`;
+}).join('\n\n')}
+
+กรุณาวิเคราะห์:
+1. เปรียบเทียบผลงานแต่ละยุทธศาสตร์
+2. ยุทธศาสตร์ที่มีผลงานดีเด่น และปัจจัยความสำเร็จ
+3. ยุทธศาสตร์ที่ต้องเร่งพัฒนา และสาเหตุ
+4. ข้อเสนอแนะการจัดสรรทรัพยากรตามยุทธศาสตร์
+5. การบูรณาการระหว่างยุทธศาสตร์`;
+
+            } else if (type === 'trend') {
+                const trendingUp = kpiSummary.filter(k => k.trend !== null && k.trend > 0).slice(0, 5);
+                const trendingDown = kpiSummary.filter(k => k.trend !== null && k.trend < 0).slice(0, 5);
+                
+                prompt = `คุณเป็นผู้เชี่ยวชาญด้านการวิเคราะห์แนวโน้มข้อมูลสาธารณสุข กรุณาวิเคราะห์แนวโน้ม KPI ของ รพ.เสลภูมิ:
+
+📈 KPI ที่มีแนวโน้มดีขึ้น:
+${trendingUp.map(k => `- ${k.name}: เพิ่มขึ้น ${k.trend?.toFixed(2)} (เฉลี่ย ${k.avg})`).join('\n') || '- ไม่มีข้อมูลเพียงพอ'}
+
+📉 KPI ที่มีแนวโน้มลดลง:
+${trendingDown.map(k => `- ${k.name}: ลดลง ${Math.abs(k.trend)?.toFixed(2)} (เฉลี่ย ${k.avg})`).join('\n') || '- ไม่มีข้อมูลเพียงพอ'}
+
+📊 ข้อมูลรายเดือน KPI สำคัญ:
+${kpiSummary.filter(k => k.totalMonths >= 3).slice(0, 5).map(k => `- ${k.name}: ${k.values.map((v, i) => v !== null ? `${months[i]}=${v}` : '').filter(x => x).join(', ')}`).join('\n')}
+
+กรุณาวิเคราะห์:
+1. แนวโน้มภาพรวมของ KPI
+2. ปัจจัยที่ทำให้ KPI มีแนวโน้มดีขึ้น
+3. ปัจจัยที่ทำให้ KPI มีแนวโน้มแย่ลง
+4. คาดการณ์ผลงานสิ้นปีงบประมาณ
+5. ข้อเสนอแนะการปรับกลยุทธ์`;
+
+            } else if (type === 'problem') {
+                prompt = `คุณเป็นผู้เชี่ยวชาญด้านการแก้ไขปัญหา KPI สาธารณสุข กรุณาวิเคราะห์ KPI ที่ต้องปรับปรุงเร่งด่วนของ รพ.เสลภูมิ:
+
+⚠️ KPI ที่ไม่ผ่านเกณฑ์ (${problemKPIs.length} ตัว):
+
+${problemKPIs.map((k, i) => `${i + 1}. ${k.name}
+   - ยุทธศาสตร์: ${k.strategy}
+   - เป้าหมาย: ${k.target} ${k.unit}
+   - ผลงานเฉลี่ย: ${k.avg} ${k.unit}
+   - ผ่านเกณฑ์: ${k.passedMonths}/${k.totalMonths} เดือน
+   - ข้อมูลรายเดือน: ${k.values.map((v, j) => v !== null ? `${months[j]}=${v}` : '').filter(x => x).join(', ') || 'ไม่มีข้อมูล'}`).join('\n\n')}
+
+กรุณาวิเคราะห์:
+1. จัดลำดับความสำคัญ KPI ที่ต้องเร่งแก้ไข
+2. วิเคราะห์สาเหตุรากของปัญหาแต่ละ KPI
+3. แนวทางแก้ไขเฉพาะสำหรับแต่ละ KPI
+4. ทรัพยากรที่จำเป็นในการแก้ไข
+5. ระยะเวลาที่คาดว่าจะเห็นผลลัพธ์`;
+            }
+
+            document.getElementById('aiPromptText').value = prompt;
+            document.getElementById('aiPromptSection').style.display = 'block';
+            document.getElementById('aiPromptSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Generate prompt for single KPI
+        function generateSingleKPIPrompt(kpiId) {
+            const kpi = kpiData.find(k => k.id === kpiId);
+            const values = monthlyData[kpi.id] || Array(12).fill(null);
+            const validValues = values.filter(v => v !== null);
+            const avg = validValues.length > 0 ? (validValues.reduce((a, b) => a + b, 0) / validValues.length).toFixed(2) : '-';
+            const passedMonths = values.filter(v => isPassed(kpi, v) === true).length;
+            const trend = validValues.length >= 2 ? (validValues[validValues.length - 1] - validValues[0]).toFixed(2) : '-';
+
+            const prompt = `คุณเป็นผู้เชี่ยวชาญด้านการวิเคราะห์ KPI สาธารณสุข กรุณาวิเคราะห์ตัวชี้วัดนี้:
+
+📊 ข้อมูลตัวชี้วัด:
+- ชื่อ: ${kpi.name}
+- ยุทธศาสตร์: ${strategyNames[kpi.strategy]}
+- แผนงาน: ${kpi.plan}
+- เป้าหมาย: ${kpi.target} ${kpi.unit}
+- น้ำหนัก: ${kpi.weight}
+- แหล่งข้อมูล: ${kpi.source}
+- ประเภท: ${kpi.lowerIsBetter ? 'ค่าต่ำกว่าเป้าหมายดีกว่า' : 'ค่าสูงกว่าเป้าหมายดีกว่า'}
+
+📈 ผลการดำเนินงาน:
+- ค่าเฉลี่ย: ${avg} ${kpi.unit}
+- ผ่านเกณฑ์: ${passedMonths}/${validValues.length} เดือน
+- แนวโน้ม: ${trend !== '-' ? (parseFloat(trend) > 0 ? `เพิ่มขึ้น ${trend}` : `ลดลง ${Math.abs(parseFloat(trend))}`) : 'ไม่มีข้อมูลเพียงพอ'}
+
+📅 ข้อมูลรายเดือน:
+${months.map((m, i) => `${m}${i < 3 ? '68' : '69'}: ${values[i] !== null ? values[i] : '-'}`).join(' | ')}
+
+กรุณาวิเคราะห์:
+1. สถานะปัจจุบันของตัวชี้วัดนี้
+2. แนวโน้มและการคาดการณ์
+3. ปัจจัยที่ส่งผลต่อผลงาน
+4. ${isPassed(kpi, avg) ? 'แนวทางการรักษาผลงานที่ดี' : 'แนวทางการปรับปรุงแก้ไข'}
+5. ข้อเสนอแนะเฉพาะสำหรับตัวชี้วัดนี้`;
+
+            document.getElementById('aiPromptText').value = prompt;
+            document.getElementById('aiPromptSection').style.display = 'block';
+            document.getElementById('aiPromptSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Copy AI prompt to clipboard
+        function copyAIPrompt() {
+            const text = document.getElementById('aiPromptText').value;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('คัดลอก Prompt เรียบร้อยแล้ว', 'success');
+            }).catch(() => {
+                // Fallback
+                document.getElementById('aiPromptText').select();
+                document.execCommand('copy');
+                showToast('คัดลอก Prompt เรียบร้อยแล้ว', 'success');
+            });
+        }
+
+        // Open Claude AI
+        function openClaudeAI() {
+            window.open('https://claude.ai', '_blank');
+            showToast('เปิด Claude.ai แล้ว - วาง Prompt ที่คัดลอกไว้', 'success');
+        }
+
+        // Show KPI detail modal
+        function showKPIDetail(kpiId) {
+            const kpi = kpiData.find(k => k.id === kpiId);
+            const values = monthlyData[kpi.id] || Array(12).fill(null);
+            const responsible = responsibleData[kpi.id] || {};
+            
+            document.getElementById('modalStrategy').className = `strategy-badge strategy-${kpi.strategy}`;
+            document.getElementById('modalStrategy').textContent = strategyNames[kpi.strategy];
+            document.getElementById('modalTitle').textContent = kpi.name;
+
+            const validValues = values.filter(v => v !== null);
+            const avg = validValues.length > 0 ? (validValues.reduce((a, b) => a + b, 0) / validValues.length).toFixed(2) : '-';
+            const latestValueRaw = validValues.length > 0 ? validValues[validValues.length - 1] : null;
+            const latest = latestValueRaw !== null ? latestValueRaw : '-';
+            const latestPassed = latestValueRaw !== null ? isPassed(kpi, latestValueRaw) : null;
+
+            document.getElementById('modalContent').innerHTML = `
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
+                    <div style="background:linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);padding:16px;border-radius:12px;text-align:center;border:1px solid #7dd3fc;">
+                        <div style="font-size:12px;color:#0369a1;margin-bottom:8px;font-weight:500;">เป้าหมาย</div>
+                        <div style="font-size:28px;font-weight:700;color:#0284c7;">${kpi.target} <span style="font-size:14px;font-weight:400;">${kpi.unit}</span></div>
+                    </div>
+                    <div style="background:linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);padding:16px;border-radius:12px;text-align:center;border:1px solid #6ee7b7;">
+                        <div style="font-size:12px;color:#047857;margin-bottom:8px;font-weight:500;">ผลงานล่าสุด</div>
+                        <div style="font-size:28px;font-weight:700;color:${latestPassed ? '#059669' : latest === '-' ? '#64748b' : '#dc2626'};">${latest}</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);padding:16px;border-radius:12px;text-align:center;border:1px solid #a5b4fc;">
+                        <div style="font-size:12px;color:#4338ca;margin-bottom:8px;font-weight:500;">คะแนน (1-5)</div>
+                        <div style="font-size:28px;font-weight:700;color:${getScoreColor(calculateScore(kpi.id, latestValueRaw))};">
+                            ${(() => {
+                                const sc = calculateScore(kpi.id, latestValueRaw);
+                                return sc !== null ? sc + '/5' : '-';
+                            })()}
+                        </div>
+                    </div>
+                </div>
+
+                ${(() => {
+                    const criteria = scoringCriteria[kpi.id];
+                    if (!criteria || !criteria.scores) return '<div style="background:#f8fafc;padding:12px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:16px;font-size:13px;color:#64748b;text-align:center;">⚠️ ตัวชี้วัดนี้ไม่มีเกณฑ์คะแนน 1-5 (เป็นตัวชี้วัดเฉพาะ/ย่อย)</div>';
+                    const sc = calculateScore(kpi.id, latestValueRaw);
+                    const s = criteria.scores;
+                    let rows = '';
+                    for (let i = 0; i < 5; i++) {
+                        const isActive = sc === (i + 1);
+                        const bg = isActive ? 'background:#eef2ff;font-weight:700;' : '';
+                        const marker = isActive ? ' ◀' : '';
+                        rows += '<tr style="' + bg + '"><td style="text-align:center;padding:6px 12px;border:1px solid #e2e8f0;">' + (i+1) + '</td><td style="text-align:center;padding:6px 12px;border:1px solid #e2e8f0;">' + s[i] + '</td><td style="text-align:center;padding:6px 12px;border:1px solid #e2e8f0;">' + (isActive ? '✅' : '') + marker + '</td></tr>';
+                    }
+                    return '<div style="background:#f8fafc;padding:16px;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:16px;"><div style="font-size:14px;font-weight:600;margin-bottom:12px;color:#1e293b;">📊 เกณฑ์การให้คะแนน (น้ำหนัก: ' + kpi.weight + ')</div><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#f1f5f9;"><th style="padding:8px 12px;border:1px solid #e2e8f0;">ระดับคะแนน</th><th style="padding:8px 12px;border:1px solid #e2e8f0;">เกณฑ์ (' + (criteria.lower ? 'ไม่เกิน' : 'ไม่ต่ำกว่า') + ')</th><th style="padding:8px 12px;border:1px solid #e2e8f0;">ผลงาน</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+                })()}
+                
+                <div style="background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);padding:16px;border-radius:12px;border:1px solid #e2e8f0;">
+                    <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:#1e293b;">ผลงานรายเดือน</div>
+                    <div class="month-grid">
+                        ${months.map((m, i) => {
+                            const v = values[i];
+                            const passed = isPassed(kpi, v);
+                            let valueClass = 'empty';
+                            if (passed === true) valueClass = 'good';
+                            else if (passed === false) valueClass = 'bad';
+                            return `
+                                <div class="month-cell">
+                                    <div class="month-cell-label">${m}</div>
+                                    <div class="month-cell-value ${valueClass}">${v !== null ? v : '-'}</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+
+                <div style="margin-top:16px;padding:16px;background:linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);border-radius:12px;border:1px solid #a7f3d0;">
+                    <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:#047857;">👥 ผู้รับผิดชอบตัวชี้วัด</div>
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;font-size:13px;">
+                        <div style="background:white;padding:12px;border-radius:8px;border-left:3px solid #3b82f6;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                            <div style="color:#64748b;font-size:11px;margin-bottom:4px;">🏥 ผู้รับผิดชอบ รพ.</div>
+                            <div style="color:#1e293b;font-weight:500;">${responsible.responsibleHospital || '-'}</div>
+                        </div>
+                        <div style="background:white;padding:12px;border-radius:8px;border-left:3px solid #10b981;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                            <div style="color:#64748b;font-size:11px;margin-bottom:4px;">🏢 ผู้รับผิดชอบ สสอ.</div>
+                            <div style="color:#1e293b;font-weight:500;">${responsible.responsiblePHO || '-'}</div>
+                        </div>
+                        <div style="background:white;padding:12px;border-radius:8px;border-left:3px solid #f59e0b;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                            <div style="color:#64748b;font-size:11px;margin-bottom:4px;">👨‍⚕️ ผู้กำกับ รพ.</div>
+                            <div style="color:#1e293b;font-weight:500;">${responsible.supervisorHospital || '-'}</div>
+                        </div>
+                        <div style="background:white;padding:12px;border-radius:8px;border-left:3px solid #8b5cf6;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                            <div style="color:#64748b;font-size:11px;margin-bottom:4px;">👨‍💼 ผู้กำกับ สสอ.</div>
+                            <div style="color:#1e293b;font-weight:500;">${responsible.supervisorPHO || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top:16px;padding:16px;background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);border-radius:12px;border:1px solid #e2e8f0;">
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;font-size:13px;color:#475569;">
+                        <div><span style="color:#64748b;">แผนงาน:</span> ${kpi.plan}</div>
+                        <div><span style="color:#64748b;">น้ำหนัก:</span> ${kpi.weight}</div>
+                        <div><span style="color:#64748b;">แหล่งข้อมูล:</span> ${kpi.source}</div>
+                        <div><span style="color:#64748b;">ประเภท:</span> ${kpi.lowerIsBetter ? 'ค่าต่ำกว่าเป้าหมายดีกว่า' : 'ค่าสูงกว่าเป้าหมายดีกว่า'}</div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('kpiModal').classList.add('active');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('kpiModal').classList.remove('active');
+        }
+
+        // Export CSV
+        function exportCSV() {
+            const strategy = document.getElementById('reportStrategy').value;
+            let filtered = kpiData.filter(kpi => {
+                return strategy === 'all' || kpi.strategy === parseInt(strategy);
+            });
+
+            let csv = 'ลำดับ,ยุทธศาสตร์,ตัวชี้วัด,เป้าหมาย,หน่วย,' + months.join(',') + ',ผลงานล่าสุด,ผลประเมิน\n';
+            
+            filtered.forEach(kpi => {
+                const values = monthlyData[kpi.id] || Array(12).fill(null);
+                const validValues = values.filter(v => v !== null);
+                const latestValue = validValues.length > 0 ? validValues[validValues.length - 1] : '';
+                const latestPassed = latestValue !== '' ? isPassed(kpi, latestValue) : null;
+                const evaluation = latestPassed === true ? 'ผ่าน' : latestPassed === false ? 'ไม่ผ่าน' : 'รอข้อมูล';
+                
+                csv += `${kpi.id},"${strategyNames[kpi.strategy]}","${kpi.name}",${kpi.target},${kpi.unit},`;
+                csv += values.map(v => v !== null ? v : '').join(',');
+                csv += `,${latestValue},${evaluation}\n`;
+            });
+
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `KPI_Report_Selaphum_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            
+            showToast('ส่งออกไฟล์ CSV เรียบร้อยแล้ว', 'success');
+        }
+
+        // Print report
+        function printReport() {
+            window.print();
+        }
+
+        // Show toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const msg = document.getElementById('toastMessage');
+            
+            icon.textContent = type === 'success' ? '✅' : '❌';
+            msg.textContent = message;
+            toast.className = 'toast show' + (type === 'error' ? ' error' : '');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Close modal on escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // ==================== CARD Functions ====================
+
+        // Populate CARD KPI select
+        function populateCARDSelect() {
+            const select = document.getElementById('cardKPISelect');
+            select.innerHTML = '<option value="">-- เลือกตัวชี้วัด --</option>';
+            kpiData.forEach(kpi => {
+                select.innerHTML += `<option value="${kpi.id}">[${kpi.id}] ${kpi.name.substring(0, 60)}${kpi.name.length > 60 ? '...' : ''}</option>`;
+            });
+        }
+
+        // Render CARD list table
+        function renderCARDList() {
+            const strategy = document.getElementById('cardStrategyFilter').value;
+            const tbody = document.getElementById('cardTableBody');
+            
+            let filtered = kpiData.filter(kpi => {
+                return strategy === 'all' || kpi.strategy === parseInt(strategy);
+            });
+
+            tbody.innerHTML = filtered.map(kpi => {
+                // Calculate Q1 average (Oct, Nov, Dec, Jan = months 0-3)
+                const values = monthlyData[kpi.id] || Array(12).fill(null);
+                const q1Values = values.slice(0, 4).filter(v => v !== null);
+                const q1Avg = q1Values.length > 0 ? (q1Values.reduce((a, b) => a + b, 0) / q1Values.length).toFixed(2) : '-';
+                
+                const status = q1Avg !== '-' ? isPassed(kpi, parseFloat(q1Avg)) : null;
+                let statusBadge = '';
+                if (status === true) {
+                    statusBadge = '<span class="status-badge status-passed">✓ ผ่านเกณฑ์</span>';
+                } else if (status === false) {
+                    statusBadge = '<span class="status-badge status-failed">✗ ไม่ผ่าน</span>';
+                } else {
+                    statusBadge = '<span class="status-badge status-pending">- รอข้อมูล</span>';
+                }
+
+                return `
+                    <tr>
+                        <td style="text-align:center;">${kpi.id}</td>
+                        <td><span class="strategy-badge strategy-${kpi.strategy}">${strategyNames[kpi.strategy]}</span></td>
+                        <td class="kpi-name">
+                            <div class="kpi-name-text" title="${kpi.name}">${kpi.name}</div>
+                        </td>
+                        <td style="text-align:center;">${kpi.target}</td>
+                        <td style="text-align:center;font-weight:600;color:${status === true ? '#10b981' : status === false ? '#ef4444' : '#94a3b8'};">${q1Avg}</td>
+                        <td style="text-align:center;">${statusBadge}</td>
+                        <td style="text-align:center;">
+                            <div class="card-btn-group">
+                                <button class="btn-card-action btn-card-word" onclick="selectCARDKPI(${kpi.id})" title="บันทึก/แก้ไข">📝</button>
+                                <button class="btn-card-action btn-card-ai" onclick="selectCARDKPI(${kpi.id}, 'ai')" title="AI ช่วยเขียน">🤖</button>
+                                <button class="btn-card-action" style="background:linear-gradient(135deg,#059669,#10b981);" onclick="selectCARDKPI(${kpi.id}, 'word')" title="Export Word">📄</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Select KPI for CARD
+        function selectCARDKPI(kpiId, action) {
+            document.getElementById('cardKPISelect').value = kpiId;
+            loadCARDData();
+            if (action === 'ai') {
+                generateCARDPrompt();
+            } else if (action === 'word') {
+                exportCARDWord();
+            }
+        }
+
+        // Load CARD Data - defined above
+
+        // Generate CARD Prompt for Claude AI
+        function generateCARDPrompt() {
+            const kpiId = document.getElementById('cardKPISelect').value;
+            if (!kpiId) {
+                showToast('กรุณาเลือกตัวชี้วัดก่อน', 'error');
+                return;
+            }
+            
+            const kpi = kpiData.find(k => k.id === parseInt(kpiId));
+            const values = monthlyData[kpi.id] || Array(12).fill(null);
+            const q1Values = values.slice(0, 4).filter(v => v !== null);
+            const q1Avg = q1Values.length > 0 ? (q1Values.reduce((a, b) => a + b, 0) / q1Values.length).toFixed(2) : '-';
+            const status = q1Avg !== '-' ? isPassed(kpi, parseFloat(q1Avg)) : null;
+            
+            const prompt = `คุณเป็นผู้เชี่ยวชาญด้านการวิเคราะห์ CARD (Context-Action-Result-Development) สำหรับการตรวจราชการด้านสาธารณสุข
+
+กรุณาช่วยเขียน CARD การรับนิเทศ/ตรวจราชการ รอบที่ 1 ปีงบประมาณ 2569 สำหรับ คปสอ.เสลภูมิ จังหวัดร้อยเอ็ด
+
+📊 ข้อมูลตัวชี้วัด:
+- ชื่อตัวชี้วัด: ${kpi.name}
+- ยุทธศาสตร์: ${strategyNames[kpi.strategy]}
+- แผนงาน: ${kpi.plan}
+- เป้าหมาย: ${kpi.target} ${kpi.unit}
+- น้ำหนัก: ${kpi.weight}
+- แหล่งข้อมูล: ${kpi.source}
+
+📈 ผลการดำเนินงานรอบที่ 1 (ต.ค.-ม.ค.):
+- ผลงานรายเดือน: ${months.slice(0, 4).map((m, i) => `${m}${i < 3 ? '68' : '69'}=${values[i] !== null ? values[i] : '-'}`).join(', ')}
+- ค่าเฉลี่ย Q1: ${q1Avg} ${kpi.unit}
+- สถานะ: ${status === true ? 'ผ่านเกณฑ์' : status === false ? 'ไม่ผ่านเกณฑ์' : 'รอข้อมูล'}
+
+กรุณาเขียน CARD ตามโครงสร้างต่อไปนี้:
+
+**1. Context (บริบท/สถานการณ์)**
+- วิเคราะห์ปัญหาโดยใช้ Six Building Blocks:
+  1) Service Delivery (การให้บริการสุขภาพ)
+  2) Health Workforce (กำลังคนด้านสุขภาพ)
+  3) Health Information Systems (ระบบข้อมูลสุขภาพ)
+  4) Access to Essential Medicines (การเข้าถึงยาและเวชภัณฑ์ที่จำเป็น)
+  5) Health Financing (การเงินการคลังด้านสุขภาพ)
+  6) Leadership/Governance (การบริหารจัดการ/ธรรมาภิบาล)
+
+**2. Action (กิจกรรม/การดำเนินงาน)**
+- ระบุกิจกรรมที่ดำเนินการแก้ไขปัญหา
+- วิธีการดำเนินงานที่ใช้
+
+**3. Result (ผลลัพธ์)**
+- เปรียบเทียบเป้าหมายกับผลงาน
+- วิเคราะห์สาเหตุที่${status === true ? 'ผ่าน' : 'ไม่ผ่าน'}เกณฑ์
+
+**4. Development (การพัฒนา)**
+- สิ่งที่จะพัฒนาต่อในปี 2569
+
+**5. นวัตกรรม/ผลงานเด่น (Best Practice)** (ถ้ามี)
+
+**6. ปัจจัยแห่งความสำเร็จ**
+
+**7. ปัญหาและอุปสรรค**
+
+**8. ข้อเสนอเชิงนโยบาย**
+
+**9. สิ่งที่ต้องการสนับสนุน**
+
+หมายเหตุ: กรุณาเขียนเนื้อหาที่สมจริง เหมาะสมกับบริบทของโรงพยาบาลชุมชนในภาคอีสาน และสอดคล้องกับระบบสาธารณสุขไทย`;
+
+            document.getElementById('cardPromptText').value = prompt;
+            document.getElementById('cardAISection').style.display = 'block';
+            document.getElementById('cardAISection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Copy CARD Prompt
+        function copyCARDPrompt() {
+            const text = document.getElementById('cardPromptText').value;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('คัดลอก Prompt เรียบร้อยแล้ว', 'success');
+            }).catch(() => {
+                document.getElementById('cardPromptText').select();
+                document.execCommand('copy');
+                showToast('คัดลอก Prompt เรียบร้อยแล้ว', 'success');
+            });
+        }
+
+        // Export CARD to Word
+        function exportCARDWord() {
+            const kpiId = document.getElementById('cardKPISelect').value;
+            if (!kpiId) {
+                showToast('กรุณาเลือกตัวชี้วัดก่อน', 'error');
+                return;
+            }
+            
+            const kpi = kpiData.find(k => k.id === parseInt(kpiId));
+            const values = monthlyData[kpi.id] || Array(12).fill(null);
+            const q1Values = values.slice(0, 4).filter(v => v !== null);
+            const q1Avg = q1Values.length > 0 ? (q1Values.reduce((a, b) => a + b, 0) / q1Values.length).toFixed(2) : '-';
+            const status = q1Avg !== '-' ? isPassed(kpi, parseFloat(q1Avg)) : null;
+
+            // Create HTML content for Word
+            const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+body { font-family: 'TH Sarabun New', 'Sarabun', sans-serif; font-size: 16pt; line-height: 1.5; }
+h1 { font-size: 18pt; font-weight: bold; text-align: center; color: #1e40af; }
+h2 { font-size: 16pt; font-weight: bold; text-align: center; color: #1e40af; margin-bottom: 20pt; }
+h3 { font-size: 16pt; font-weight: bold; margin-top: 16pt; }
+table { width: 100%; border-collapse: collapse; margin: 10pt 0; }
+th, td { border: 1px solid #000; padding: 6pt 10pt; }
+th { background-color: #e0f2fe; font-weight: bold; }
+.pass { color: green; font-weight: bold; }
+.fail { color: red; font-weight: bold; }
+.fill-area { background-color: #f8f8f8; min-height: 50pt; padding: 8pt; }
+</style>
+</head>
+<body>
+<h1>Template การวิเคราะห์ CARD การรับนิเทศ/ตรวจราชการ รอบที่ 1</h1>
+<h2>ปีงบประมาณ 2569 คปสอ.เสลภูมิ</h2>
+
+<h3>ตัวชี้วัดที่ ${kpi.id}: ${kpi.name}</h3>
+<p>ยุทธศาสตร์: ${strategyNames[kpi.strategy]} | แผนงาน: ${kpi.plan} | เป้าหมาย: ${kpi.target} ${kpi.unit}</p>
+
+<h3>1. Context ผลงานย้อนหลัง 3 ปี</h3>
+<table>
+<tr><th>ปีงบประมาณ</th><th>2565</th><th>2566</th><th>2567</th><th>2568</th><th>2569 รอบที่ 1</th></tr>
+<tr><td><b>ผลงาน</b></td><td></td><td></td><td></td><td></td><td><b>${q1Avg}</b></td></tr>
+</table>
+
+<p><b>วิเคราะห์ปัญหาที่เกิดจากการดำเนินงานในปีงบประมาณ 2568 โดยใช้ Six Building Blocks</b></p>
+<table>
+<tr><th style="width:35%">ด้าน</th><th>วิเคราะห์ปัญหา</th></tr>
+<tr><td>1. Service Delivery (การให้บริการสุขภาพ)</td><td></td></tr>
+<tr><td>2. Health Workforce (กำลังคนด้านสุขภาพ)</td><td></td></tr>
+<tr><td>3. Health Information Systems (ระบบข้อมูลสุขภาพ)</td><td></td></tr>
+<tr><td>4. Access to Essential Medicines (การเข้าถึงยาและเวชภัณฑ์)</td><td></td></tr>
+<tr><td>5. Health Financing (การเงินการคลังด้านสุขภาพ)</td><td></td></tr>
+<tr><td>6. Leadership/Governance (การบริหารจัดการ/ธรรมาภิบาล)</td><td></td></tr>
+</table>
+
+<h3>2. Action กิจกรรม/วิธีดำเนินงาน</h3>
+<div class="fill-area">กิจกรรม/วิธีดำเนินงาน เพื่อแก้ไขปัญหาที่เกิดจากการวิเคราะห์ Context</div>
+
+<h3>3. Result ผลลัพธ์ที่เกิดขึ้น</h3>
+<table>
+<tr><th>เกณฑ์/เป้าหมายปีงบประมาณ 2569</th><th>ผลงานปีงบประมาณ 2569</th><th>ผลการประเมิน</th></tr>
+<tr><td>${kpi.target} ${kpi.unit}</td><td>${q1Avg} ${kpi.unit}</td><td class="${status === true ? 'pass' : 'fail'}">${status === true ? 'ผ่าน' : status === false ? 'ไม่ผ่าน' : 'รอข้อมูล'}</td></tr>
+</table>
+
+<h3>4. Development สิ่งที่จะพัฒนาในปีงบประมาณ 2569</h3>
+<div class="fill-area"></div>
+
+<h3>5. นวัตกรรม/ผลงานเด่น (Best Practice) (ถ้ามี)</h3>
+<div class="fill-area"></div>
+
+<h3>6. ปัจจัยแห่งความสำเร็จ</h3>
+<div class="fill-area"></div>
+
+<h3>7. ปัญหาและอุปสรรค/จุดร่วมที่สะท้อนปัญหาหรือความเสี่ยงต่อความไม่สำเร็จของงาน</h3>
+<div class="fill-area"></div>
+
+<h3>8. ข้อเสนอเชิงนโยบาย/ข้อเสนอเพื่อปรับปรุงพัฒนา</h3>
+<div class="fill-area"></div>
+
+<h3>9. สิ่งที่ต้องการสนับสนุนจากผู้ทำหน้าที่ตรวจราชการและนิเทศงาน และส่วนกลาง</h3>
+<div class="fill-area"></div>
+
+<p style="margin-top: 30pt;">
+ผู้รายงาน............................................................<br/>
+ตำแหน่ง/หน่วยงาน.............................................<br/>
+เบอร์ติดต่อ.........................................................<br/>
+E-mail...............................................................<br/>
+วัน/เดือน/ปี.......................................................<br/>
+</p>
+
+<p style="color: #666; font-size: 14pt;">หมายเหตุ : การตรวจราชการ รอบที่ 1 ใช้รายงานข้อมูลผลการดำเนินงาน รอบ 4 เดือน ณ วันที่ 20 ม.ค.</p>
+</body>
+</html>`;
+
+            // Create blob and download
+            const blob = new Blob([htmlContent], { type: 'application/msword' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `CARD_KPI${kpi.id}_${kpi.name.substring(0, 30).replace(/[^a-zA-Z0-9ก-๙]/g, '_')}.doc`;
+            link.click();
+            
+            showToast('ดาวน์โหลดไฟล์ Word เรียบร้อยแล้ว', 'success');
+        }
+
+        // CARD Data Storage
+        let cardData = {};
+
+        // Load CARD storage from localStorage
+        function loadCardStorage() {
+            const saved = localStorage.getItem('kpi_card_data');
+            if (saved) {
+                cardData = JSON.parse(saved);
+            }
+        }
+
+        // Save CARD storage to localStorage
+        function saveCardStorage() {
+            localStorage.setItem('kpi_card_data', JSON.stringify(cardData));
+        }
+
+        // Load CARD Data for selected KPI
+        function loadCARDData() {
+            const kpiId = document.getElementById('cardKPISelect').value;
+            const formSection = document.getElementById('cardFormSection');
+            
+            if (!kpiId) {
+                formSection.style.display = 'none';
+                return;
+            }
+            
+            const kpi = kpiData.find(k => k.id === parseInt(kpiId));
+            const values = monthlyData[kpi.id] || Array(12).fill(null);
+            const q1Values = values.slice(0, 4).filter(v => v !== null);
+            const q1Avg = q1Values.length > 0 ? (q1Values.reduce((a, b) => a + b, 0) / q1Values.length).toFixed(2) : '-';
+            const status = q1Avg !== '-' ? isPassed(kpi, parseFloat(q1Avg)) : null;
+            const responsible = responsibleData[kpi.id] || {};
+
+            // Update KPI info with responsible persons
+            document.getElementById('cardKPIInfo').innerHTML = `
+                <h3>ตัวชี้วัดที่ ${kpi.id}: ${kpi.name}</h3>
+                <p>ยุทธศาสตร์: ${strategyNames[kpi.strategy]} | แผนงาน: ${kpi.plan} | เป้าหมาย: ${kpi.target} ${kpi.unit}</p>
+                <div style="margin-top:12px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+                    <div style="background:rgba(59,130,246,0.1);padding:8px 12px;border-radius:6px;border-left:3px solid #3b82f6;">
+                        <span style="font-size:11px;color:#3b82f6;">🏥 ผู้รับผิดชอบ รพ.:</span>
+                        <span style="font-size:12px;color:#1e40af;font-weight:500;">${responsible.responsibleHospital || '-'}</span>
+                    </div>
+                    <div style="background:rgba(16,185,129,0.1);padding:8px 12px;border-radius:6px;border-left:3px solid #10b981;">
+                        <span style="font-size:11px;color:#10b981;">🏢 ผู้รับผิดชอบ สสอ.:</span>
+                        <span style="font-size:12px;color:#065f46;font-weight:500;">${responsible.responsiblePHO || '-'}</span>
+                    </div>
+                    <div style="background:rgba(245,158,11,0.1);padding:8px 12px;border-radius:6px;border-left:3px solid #f59e0b;">
+                        <span style="font-size:11px;color:#f59e0b;">👨‍⚕️ ผู้กำกับ รพ.:</span>
+                        <span style="font-size:12px;color:#92400e;font-weight:500;">${responsible.supervisorHospital || '-'}</span>
+                    </div>
+                    <div style="background:rgba(139,92,246,0.1);padding:8px 12px;border-radius:6px;border-left:3px solid #8b5cf6;">
+                        <span style="font-size:11px;color:#8b5cf6;">👨‍💼 ผู้กำกับ สสอ.:</span>
+                        <span style="font-size:12px;color:#5b21b6;font-weight:500;">${responsible.supervisorPHO || '-'}</span>
+                    </div>
+                </div>
+            `;
+
+            // Update Q1 result
+            document.getElementById('card_result_2569_q1').textContent = q1Avg;
+            document.getElementById('card_result_2569_q1').style.color = status === true ? '#16a34a' : status === false ? '#dc2626' : '#64748b';
+
+            // Update Result table
+            document.getElementById('card_target').textContent = kpi.target + ' ' + kpi.unit;
+            document.getElementById('card_performance').textContent = q1Avg + ' ' + kpi.unit;
+            const evalCell = document.getElementById('card_evaluation');
+            if (status === true) {
+                evalCell.textContent = 'ผ่าน';
+                evalCell.className = 'result-pass';
+            } else if (status === false) {
+                evalCell.textContent = 'ไม่ผ่าน';
+                evalCell.className = 'result-fail';
+            } else {
+                evalCell.textContent = 'รอข้อมูล';
+                evalCell.className = 'result-pending';
+            }
+
+            // Load saved CARD data if exists
+            const saved = cardData[kpiId];
+            if (saved) {
+                document.getElementById('card_result_2565').value = saved.result_2565 || '';
+                document.getElementById('card_result_2566').value = saved.result_2566 || '';
+                document.getElementById('card_result_2567').value = saved.result_2567 || '';
+                document.getElementById('card_result_2568').value = saved.result_2568 || '';
+                document.getElementById('card_block_1').value = saved.block_1 || '';
+                document.getElementById('card_block_2').value = saved.block_2 || '';
+                document.getElementById('card_block_3').value = saved.block_3 || '';
+                document.getElementById('card_block_4').value = saved.block_4 || '';
+                document.getElementById('card_block_5').value = saved.block_5 || '';
+                document.getElementById('card_block_6').value = saved.block_6 || '';
+                document.getElementById('card_action').value = saved.action || '';
+                document.getElementById('card_development').value = saved.development || '';
+                document.getElementById('card_bestpractice').value = saved.bestpractice || '';
+                document.getElementById('card_success').value = saved.success || '';
+                document.getElementById('card_problems').value = saved.problems || '';
+                document.getElementById('card_policy').value = saved.policy || '';
+                document.getElementById('card_support').value = saved.support || '';
+                document.getElementById('card_reporter').value = saved.reporter || '';
+                document.getElementById('card_position').value = saved.position || '';
+                document.getElementById('card_phone').value = saved.phone || '';
+                document.getElementById('card_email').value = saved.email || '';
+            } else {
+                clearCARDFormFields();
+            }
+
+            formSection.style.display = 'block';
+            formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Clear CARD form fields
+        function clearCARDFormFields() {
+            document.getElementById('card_result_2565').value = '';
+            document.getElementById('card_result_2566').value = '';
+            document.getElementById('card_result_2567').value = '';
+            document.getElementById('card_result_2568').value = '';
+            document.getElementById('card_block_1').value = '';
+            document.getElementById('card_block_2').value = '';
+            document.getElementById('card_block_3').value = '';
+            document.getElementById('card_block_4').value = '';
+            document.getElementById('card_block_5').value = '';
+            document.getElementById('card_block_6').value = '';
+            document.getElementById('card_action').value = '';
+            document.getElementById('card_development').value = '';
+            document.getElementById('card_bestpractice').value = '';
+            document.getElementById('card_success').value = '';
+            document.getElementById('card_problems').value = '';
+            document.getElementById('card_policy').value = '';
+            document.getElementById('card_support').value = '';
+            document.getElementById('card_reporter').value = '';
+            document.getElementById('card_position').value = '';
+            document.getElementById('card_phone').value = '';
+            document.getElementById('card_email').value = '';
+        }
+
+        // Clear CARD form
+        function clearCARDForm() {
+            if (confirm('ต้องการล้างข้อมูลในฟอร์มทั้งหมดหรือไม่?')) {
+                clearCARDFormFields();
+                showToast('ล้างข้อมูลเรียบร้อยแล้ว', 'success');
+            }
+        }
+
+        // Save CARD Data
+        function saveCARDData() {
+            const kpiId = document.getElementById('cardKPISelect').value;
+            if (!kpiId) {
+                showToast('กรุณาเลือกตัวชี้วัดก่อน', 'error');
+                return;
+            }
+
+            cardData[kpiId] = {
+                result_2565: document.getElementById('card_result_2565').value,
+                result_2566: document.getElementById('card_result_2566').value,
+                result_2567: document.getElementById('card_result_2567').value,
+                result_2568: document.getElementById('card_result_2568').value,
+                block_1: document.getElementById('card_block_1').value,
+                block_2: document.getElementById('card_block_2').value,
+                block_3: document.getElementById('card_block_3').value,
+                block_4: document.getElementById('card_block_4').value,
+                block_5: document.getElementById('card_block_5').value,
+                block_6: document.getElementById('card_block_6').value,
+                action: document.getElementById('card_action').value,
+                development: document.getElementById('card_development').value,
+                bestpractice: document.getElementById('card_bestpractice').value,
+                success: document.getElementById('card_success').value,
+                problems: document.getElementById('card_problems').value,
+                policy: document.getElementById('card_policy').value,
+                support: document.getElementById('card_support').value,
+                reporter: document.getElementById('card_reporter').value,
+                position: document.getElementById('card_position').value,
+                phone: document.getElementById('card_phone').value,
+                email: document.getElementById('card_email').value,
+                savedAt: new Date().toISOString()
+            };
+
+            saveCardStorage();
+            renderCARDList();
+            populateCARDSelect();
+            document.getElementById('cardKPISelect').value = kpiId;
+            showToast('บันทึก CARD เรียบร้อยแล้ว', 'success');
+        }
+
+        // Update CARD summary
+        function updateCARDSummary() {
+            const completed = Object.keys(cardData).length;
+            const total = kpiData.length;
+            const pending = total - completed;
+            const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            document.getElementById('cardTotalKPI').textContent = total;
+            document.getElementById('cardCompleted').textContent = completed;
+            document.getElementById('cardPending').textContent = pending;
+            document.getElementById('cardProgress').textContent = progress + '%';
+        }
+
+        // Initialize CARD tab when switching
+        function initCARDTab() {
+            loadCardStorage();
+            populateCARDSelect();
+            renderCARDList();
+        }
+    </script>
+</body>
+</html>
