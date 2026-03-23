@@ -1345,10 +1345,125 @@
             background: #fef3c7;
             color: #92400e;
         }
+
+        /* ========== LOGIN / AUTH SYSTEM ========== */
+        .login-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15,23,42,0.7); backdrop-filter: blur(12px);
+            z-index: 2000; justify-content: center; align-items: center; padding: 20px;
+        }
+        .login-overlay.active { display: flex; }
+        .login-box {
+            background: white; border-radius: 24px; max-width: 420px; width: 100%;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3); overflow: hidden;
+            animation: loginSlide 0.4s ease;
+        }
+        @keyframes loginSlide {
+            from { transform: translateY(-30px) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .login-box-header {
+            background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 50%, #6366f1 100%);
+            padding: 32px; text-align: center;
+        }
+        .login-box-header .login-icon {
+            width: 64px; height: 64px; background: rgba(255,255,255,0.2);
+            border-radius: 16px; display: inline-flex; align-items: center;
+            justify-content: center; font-size: 32px; margin-bottom: 16px;
+        }
+        .login-box-header h2 { color: white; font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+        .login-box-header p { color: rgba(255,255,255,0.75); font-size: 13px; }
+        .login-box-body { padding: 32px; }
+        .login-field { margin-bottom: 20px; }
+        .login-field label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 8px; }
+        .login-field input {
+            width: 100%; padding: 14px 16px; border: 2px solid #e2e8f0; border-radius: 12px;
+            font-size: 15px; font-family: inherit; transition: all 0.3s; background: #f8fafc;
+        }
+        .login-field input:focus { outline: none; border-color: #0ea5e9; box-shadow: 0 0 0 4px rgba(14,165,233,0.12); background: white; }
+        .login-field input.input-error { border-color: #ef4444; box-shadow: 0 0 0 4px rgba(239,68,68,0.1); }
+        .login-error-msg { color: #ef4444; font-size: 13px; margin-top: 8px; display: none; align-items: center; gap: 6px; }
+        .login-error-msg.show { display: flex; }
+        .login-btn {
+            width: 100%; padding: 14px; background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+            color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600;
+            font-family: inherit; cursor: pointer; transition: all 0.3s;
+        }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(14,165,233,0.4); }
+        .login-cancel-btn {
+            width: 100%; padding: 12px; background: transparent; color: #64748b;
+            border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px;
+            font-family: inherit; cursor: pointer; margin-top: 12px; transition: all 0.3s;
+        }
+        .login-cancel-btn:hover { background: #f1f5f9; color: #334155; }
+
+        .role-badge {
+            display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px;
+            border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.3s;
+        }
+        .role-badge.admin {
+            background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(5,150,105,0.25));
+            color: #d1fae5; border: 1px solid rgba(16,185,129,0.4);
+        }
+        .role-badge.viewer {
+            background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.8);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .role-badge:hover { transform: scale(1.03); }
+
+        /* Entry tab lock overlay */
+        .locked-banner {
+            display: none; background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%);
+            border: 2px solid #fbbf24; border-radius: 16px; padding: 24px; margin-bottom: 20px;
+            text-align: center; cursor: pointer; transition: all 0.3s;
+        }
+        .locked-banner:hover { box-shadow: 0 8px 30px rgba(251,191,36,0.3); transform: translateY(-2px); }
+        .locked-banner.show { display: block; }
+        .locked-banner .lock-icon { font-size: 40px; margin-bottom: 8px; }
+        .locked-banner p { color: #92400e; font-size: 15px; font-weight: 500; margin-bottom: 12px; }
+        .locked-banner .lock-btn {
+            padding: 10px 28px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600;
+            font-family: inherit; cursor: pointer; transition: all 0.3s;
+        }
+        .locked-banner .lock-btn:hover { box-shadow: 0 4px 16px rgba(245,158,11,0.4); }
+
+        /* Readonly mode for entry tab */
+        .entry-readonly .kpi-month-input {
+            background: #f1f5f9 !important; color: #94a3b8 !important;
+            cursor: not-allowed; pointer-events: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Login Modal -->
+        <div class="login-overlay" id="loginOverlay">
+            <div class="login-box">
+                <div class="login-box-header">
+                    <div class="login-icon">🔐</div>
+                    <h2>เข้าสู่ระบบแอดมิน</h2>
+                    <p>สำหรับบันทึก/แก้ไขผลงาน KPI รายเดือน</p>
+                </div>
+                <div class="login-box-body">
+                    <div class="login-field">
+                        <label>ชื่อผู้ใช้งาน</label>
+                        <input type="text" id="loginUsername" placeholder="กรอกชื่อผู้ใช้งาน" autocomplete="username">
+                    </div>
+                    <div class="login-field">
+                        <label>รหัสผ่าน</label>
+                        <input type="password" id="loginPassword" placeholder="กรอกรหัสผ่าน" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+                    </div>
+                    <div class="login-error-msg" id="loginError">
+                        <span>⚠️</span>
+                        <span id="loginErrorText">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</span>
+                    </div>
+                    <button class="login-btn" onclick="doLogin()">🔓 เข้าสู่ระบบ</button>
+                    <button class="login-cancel-btn" onclick="closeLogin()">ยกเลิก</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Header -->
         <div class="header">
             <div class="header-title">
@@ -1360,11 +1475,16 @@
             </div>
             
             <!-- Sync Status & Controls -->
-            <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <!-- Role Badge -->
+                <div id="roleBadge" class="role-badge viewer" onclick="handleRoleBadgeClick()" title="คลิกเพื่อเข้าสู่ระบบแอดมิน">
+                    <span id="roleBadgeIcon">👁️</span>
+                    <span id="roleBadgeText">ผู้ชมทั่วไป</span>
+                </div>
                 <div id="syncIndicator" style="padding: 6px 12px; background: rgba(255,255,255,0.2); border-radius: 8px;">
                     <span style="color: #94a3b8; font-size: 12px;">💾 Offline Mode</span>
                 </div>
-                <button onclick="syncAllToGoogleSheets()" class="btn btn-success" style="padding: 8px 16px; font-size: 13px;" title="Sync ข้อมูลทั้งหมดไป Google Sheets">
+                <button onclick="syncAllToGoogleSheets()" class="btn btn-success" style="padding: 8px 16px; font-size: 13px;" title="Sync ข้อมูลทั้งหมดไป Google Sheets" id="btnSyncSheets">
                     ☁️ Sync to Sheets
                 </button>
                 <button onclick="loadFromGoogleSheets().then(() => { updateDashboard(); renderEntryList(); renderReportTable(); })" class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);" title="โหลดข้อมูลจาก Google Sheets">
@@ -1505,7 +1625,14 @@
 
         <!-- Entry Tab -->
         <div id="tab-entry" class="tab-content">
-            <div class="entry-section">
+            <!-- Lock Banner (shown for non-admin) -->
+            <div class="locked-banner" id="entryLockedBanner" onclick="showLoginModal()">
+                <div class="lock-icon">🔒</div>
+                <p>หน้าบันทึกผลงานนี้สำหรับแอดมินเท่านั้น — ผู้ชมทั่วไปสามารถดูข้อมูลได้แต่แก้ไขไม่ได้</p>
+                <button class="lock-btn" type="button">🔐 เข้าสู่ระบบแอดมิน</button>
+            </div>
+
+            <div class="entry-section" id="entryFormSection">
                 <div class="entry-header">
                     <div class="entry-title">📝 บันทึกผลงานรายเดือน</div>
                     <div style="display: flex; gap: 12px; align-items: center;">
@@ -3741,6 +3868,182 @@ E-mail...............................................................<br/>
             populateCARDSelect();
             renderCARDList();
         }
+
+        // =============================================
+        // ========= LOGIN / AUTH SYSTEM ==============
+        // =============================================
+        //
+        // สิทธิ์การใช้งาน:
+        //   แอดมิน  → บันทึก/แก้ไขผลงานรายเดือน (Entry tab) + ทุกอย่าง
+        //   ผู้ชมทั่วไป → ดู Dashboard, รายงาน, วิเคราะห์ AI, บันทึก CARD ได้
+        //              แต่ แก้ไข/บันทึกผลงานรายเดือน ไม่ได้
+        // =============================================
+
+        // --- Password hashing ---
+        async function hashPassword(str) {
+            const data = new TextEncoder().encode(str);
+            const buf = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Admin accounts: { username: hash(password) }
+        let adminHashes = {};
+
+        async function initAdminHashes() {
+            // บัญชี admin/selaphum2569 และ saranyoo/kpi2569
+            adminHashes['admin'] = await hashPassword('selaphum2569');
+            adminHashes['saranyoo'] = await hashPassword('kpi2569');
+        }
+        initAdminHashes();
+
+        // --- Auth state ---
+        const AUTH_KEY = 'kpi_auth_session';
+        let isAdmin = false;
+        let currentUser = null;
+
+        function checkSession() {
+            const session = localStorage.getItem(AUTH_KEY);
+            if (session) {
+                try {
+                    const data = JSON.parse(session);
+                    if (data.timestamp && (Date.now() - data.timestamp) < 24 * 60 * 60 * 1000) {
+                        isAdmin = true;
+                        currentUser = data.username;
+                        applyAuthState();
+                        return;
+                    }
+                } catch(e) {}
+                localStorage.removeItem(AUTH_KEY);
+            }
+            isAdmin = false;
+            currentUser = null;
+            applyAuthState();
+        }
+
+        // --- UI functions ---
+        function showLoginModal() {
+            const overlay = document.getElementById('loginOverlay');
+            overlay.classList.add('active');
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginError').classList.remove('show');
+            document.getElementById('loginUsername').classList.remove('input-error');
+            document.getElementById('loginPassword').classList.remove('input-error');
+            setTimeout(() => document.getElementById('loginUsername').focus(), 300);
+        }
+
+        function closeLogin() {
+            document.getElementById('loginOverlay').classList.remove('active');
+        }
+
+        async function doLogin() {
+            const username = document.getElementById('loginUsername').value.trim().toLowerCase();
+            const password = document.getElementById('loginPassword').value;
+            if (!username || !password) {
+                showLoginError('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน');
+                return;
+            }
+            const inputHash = await hashPassword(password);
+            if (adminHashes[username] && adminHashes[username] === inputHash) {
+                isAdmin = true;
+                currentUser = username;
+                localStorage.setItem(AUTH_KEY, JSON.stringify({ username, timestamp: Date.now() }));
+                closeLogin();
+                applyAuthState();
+                renderEntryList(); // re-render to unlock inputs
+                showToast('🛡️ เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ ' + username, 'success');
+            } else {
+                showLoginError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+                document.getElementById('loginUsername').classList.add('input-error');
+                document.getElementById('loginPassword').classList.add('input-error');
+            }
+        }
+
+        function showLoginError(msg) {
+            document.getElementById('loginErrorText').textContent = msg;
+            document.getElementById('loginError').classList.add('show');
+        }
+
+        function doLogout() {
+            if (confirm('ต้องการออกจากระบบแอดมินหรือไม่?\n\n(ยังคงดูข้อมูล, วิเคราะห์ AI, และบันทึก CARD ได้ตามปกติ)')) {
+                isAdmin = false;
+                currentUser = null;
+                localStorage.removeItem(AUTH_KEY);
+                applyAuthState();
+                renderEntryList(); // re-render to lock inputs
+                showToast('ออกจากระบบเรียบร้อยแล้ว', 'success');
+            }
+        }
+
+        function handleRoleBadgeClick() {
+            if (isAdmin) doLogout();
+            else showLoginModal();
+        }
+
+        // --- Apply auth state to UI ---
+        function applyAuthState() {
+            const badge = document.getElementById('roleBadge');
+            const badgeIcon = document.getElementById('roleBadgeIcon');
+            const badgeText = document.getElementById('roleBadgeText');
+            const lockedBanner = document.getElementById('entryLockedBanner');
+            const entryForm = document.getElementById('entryFormSection');
+            const syncBtn = document.getElementById('btnSyncSheets');
+
+            if (isAdmin) {
+                badge.className = 'role-badge admin';
+                badge.title = 'แอดมิน — คลิกเพื่อออกจากระบบ';
+                badgeIcon.textContent = '🛡️';
+                badgeText.textContent = 'แอดมิน: ' + currentUser;
+
+                // ปลดล็อค Entry tab
+                if (lockedBanner) lockedBanner.classList.remove('show');
+                if (entryForm) entryForm.classList.remove('entry-readonly');
+
+                // เปิด Sync button
+                if (syncBtn) { syncBtn.style.opacity = '1'; syncBtn.style.pointerEvents = 'auto'; }
+            } else {
+                badge.className = 'role-badge viewer';
+                badge.title = 'คลิกเพื่อเข้าสู่ระบบแอดมิน';
+                badgeIcon.textContent = '👁️';
+                badgeText.textContent = 'ผู้ชมทั่วไป';
+
+                // ล็อค Entry tab
+                if (lockedBanner) lockedBanner.classList.add('show');
+                if (entryForm) entryForm.classList.add('entry-readonly');
+
+                // ปิด Sync button (เพราะ sync = เขียนข้อมูลไป Sheets)
+                if (syncBtn) { syncBtn.style.opacity = '0.4'; syncBtn.style.pointerEvents = 'none'; }
+            }
+        }
+
+        // --- Guard: updateMonthValue (บันทึกผลงานรายเดือน) ---
+        const _origUpdateMonthValue = updateMonthValue;
+        updateMonthValue = function(kpiId, monthIndex, value) {
+            if (!isAdmin) {
+                showToast('⚠️ กรุณาเข้าสู่ระบบแอดมินก่อนบันทึกผลงาน', 'error');
+                showLoginModal();
+                renderEntryList(); // revert input
+                return;
+            }
+            _origUpdateMonthValue(kpiId, monthIndex, value);
+        };
+
+        // --- Guard: syncAllToGoogleSheets ---
+        const _origSyncAll = syncAllToGoogleSheets;
+        syncAllToGoogleSheets = function() {
+            if (!isAdmin) {
+                showToast('⚠️ กรุณาเข้าสู่ระบบแอดมินก่อน Sync ข้อมูล', 'error');
+                showLoginModal();
+                return;
+            }
+            _origSyncAll();
+        };
+
+        // หมายเหตุ: saveCARDData, clearCARDForm, AI analysis
+        // ไม่ต้อง guard — ผู้ใช้ทั่วไปใช้ได้ตามความต้องการ
+
+        // --- Init auth on page load ---
+        checkSession();
     </script>
 </body>
 </html>
