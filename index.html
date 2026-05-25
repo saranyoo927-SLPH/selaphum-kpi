@@ -1813,7 +1813,7 @@
                                         <th>2566</th>
                                         <th>2567</th>
                                         <th>2568</th>
-                                        <th>2569 รอบที่ 1</th>
+                                        <th id="card_result_header_current">2569 ผลงาน ณ เดือนปัจจุบัน</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1970,8 +1970,8 @@
                         <button class="btn btn-success" onclick="saveCARDData()">💾 บันทึก CARD</button>
                     </div>
 
-                    <div class="card-note">
-                        หมายเหตุ : การตรวจราชการ รอบที่ 1 ใช้รายงานข้อมูลผลการดำเนินงาน รอบ 4 เดือน ณ วันที่ 20 ม.ค.
+                    <div class="card-note" id="card_note_current">
+                        หมายเหตุ : ใช้รายงานข้อมูลผลการดำเนินงานสะสม ตั้งแต่ ต.ค. ถึงเดือนปัจจุบัน
                     </div>
                 </div>
             </div>
@@ -2042,7 +2042,7 @@
                                 <th>ยุทธศาสตร์</th>
                                 <th class="kpi-name">ตัวชี้วัด</th>
                                 <th style="width: 80px;">เป้าหมาย</th>
-                                <th style="width: 80px;">ผลงาน Q1</th>
+                                <th style="width: 100px;">ผลงานเดือนปัจจุบัน</th>
                                 <th style="width: 100px;">สถานะผลงาน</th>
                                 <th style="width: 100px;">สถานะ CARD</th>
                                 <th style="width: 120px;">จัดการ</th>
@@ -2439,6 +2439,38 @@ const kpiData = [
         };
 
         const months = ['ต.ค.', 'พ.ย.', 'ธ.ค.', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.'];
+
+        // ============================================================
+        // CARD ตรวจราชการ - Helper สำหรับ "ผลงานเดือนปัจจุบัน"
+        // ============================================================
+        // คืนค่า index ของเดือนปัจจุบันในปฏิทินงบประมาณ (ต.ค. = 0 ... ก.ย. = 11)
+        // ถ้าเดือนปัจจุบัน >= ต.ค. (10,11,12) → index = currentMonth - 10
+        // ถ้าเดือนปัจจุบัน <= ก.ย. (1-9) → index = currentMonth + 2
+        function getCurrentFiscalMonthIndex() {
+            const now = new Date();
+            const m = now.getMonth() + 1; // 1-12
+            return m >= 10 ? m - 10 : m + 2;
+        }
+
+        // คำนวณผลงานสะสมเฉลี่ยตั้งแต่ ต.ค. จนถึงเดือนปัจจุบัน
+        // คืน { avg: string, count: number, monthIndex: number, monthName: string, values: array }
+        function getCurrentPerformance(kpiId) {
+            const values = monthlyData[kpiId] || Array(12).fill(null);
+            const idx = getCurrentFiscalMonthIndex();
+            // ตัดข้อมูลตั้งแต่ ต.ค. (index 0) จนถึงเดือนปัจจุบัน (รวม)
+            const sliced = values.slice(0, idx + 1);
+            const valid = sliced.filter(v => v !== null && v !== undefined && v !== '');
+            const avg = valid.length > 0
+                ? (valid.reduce((a, b) => a + Number(b), 0) / valid.length).toFixed(2)
+                : '-';
+            return {
+                avg: avg,
+                count: valid.length,
+                monthIndex: idx,
+                monthName: months[idx],
+                values: sliced
+            };
+        }
 
         // Charts
         let pieChart, barChart;
@@ -3430,12 +3462,11 @@ ${months.map((m, i) => `${m}${i < 3 ? '68' : '69'}: ${values[i] !== null ? value
             });
 
             tbody.innerHTML = filtered.map(kpi => {
-                // Calculate Q1 average (Oct, Nov, Dec, Jan = months 0-3)
-                const values = monthlyData[kpi.id] || Array(12).fill(null);
-                const q1Values = values.slice(0, 4).filter(v => v !== null);
-                const q1Avg = q1Values.length > 0 ? (q1Values.reduce((a, b) => a + b, 0) / q1Values.length).toFixed(2) : '-';
-                
-                const status = q1Avg !== '-' ? isPassed(kpi, parseFloat(q1Avg)) : null;
+                // ใช้ผลงานสะสมตั้งแต่ ต.ค. จนถึงเดือนปัจจุบัน (แทนที่จะใช้ Q1 4 เดือน)
+                const perf = getCurrentPerformance(kpi.id);
+                const currentAvg = perf.avg;
+
+                const status = currentAvg !== '-' ? isPassed(kpi, parseFloat(currentAvg)) : null;
                 let statusBadge = '';
                 if (status === true) {
                     statusBadge = '<span class="status-badge status-passed">✓ ผ่านเกณฑ์</span>';
@@ -3453,7 +3484,7 @@ ${months.map((m, i) => `${m}${i < 3 ? '68' : '69'}: ${values[i] !== null ? value
                             <div class="kpi-name-text" title="${kpi.name}">${kpi.name}</div>
                         </td>
                         <td style="text-align:center;">${kpi.target}</td>
-                        <td style="text-align:center;font-weight:600;color:${status === true ? '#10b981' : status === false ? '#ef4444' : '#94a3b8'};">${q1Avg}</td>
+                        <td style="text-align:center;font-weight:600;color:${status === true ? '#10b981' : status === false ? '#ef4444' : '#94a3b8'};">${currentAvg}</td>
                         <td style="text-align:center;">${statusBadge}</td>
                         <td style="text-align:center;">
                             <div class="card-btn-group">
@@ -3489,11 +3520,19 @@ ${months.map((m, i) => `${m}${i < 3 ? '68' : '69'}: ${values[i] !== null ? value
             }
             
             const kpi = kpiData.find(k => k.id === parseInt(kpiId));
+            // ใช้ผลงานสะสมตั้งแต่ ต.ค. จนถึงเดือนปัจจุบัน
+            const perf = getCurrentPerformance(kpi.id);
             const values = monthlyData[kpi.id] || Array(12).fill(null);
-            const q1Values = values.slice(0, 4).filter(v => v !== null);
-            const q1Avg = q1Values.length > 0 ? (q1Values.reduce((a, b) => a + b, 0) / q1Values.length).toFixed(2) : '-';
-            const status = q1Avg !== '-' ? isPassed(kpi, parseFloat(q1Avg)) : null;
-            
+            const currentAvg = perf.avg;
+            const status = currentAvg !== '-' ? isPassed(kpi, parseFloat(currentAvg)) : null;
+
+            // สร้างรายการผลงานรายเดือน (ต.ค. ถึงเดือนปัจจุบัน)
+            // ปีงบประมาณ 2569: ต.ค.-ธ.ค. = ปี 68, ม.ค.-ก.ย. = ปี 69
+            const monthlyDetail = months.slice(0, perf.monthIndex + 1).map((m, i) => {
+                const yr = i < 3 ? '68' : '69';
+                return `${m}${yr}=${values[i] !== null && values[i] !== undefined ? values[i] : '-'}`;
+            }).join(', ');
+
             const prompt = `คุณเป็นผู้เชี่ยวชาญด้านการวิเคราะห์ CARD (Context-Action-Result-Development) สำหรับการตรวจราชการด้านสาธารณสุข
 
 กรุณาช่วยเขียน CARD การรับนิเทศ/ตรวจราชการ รอบที่ 1 ปีงบประมาณ 2569 สำหรับ คปสอ.เสลภูมิ จังหวัดร้อยเอ็ด
@@ -3506,9 +3545,9 @@ ${months.map((m, i) => `${m}${i < 3 ? '68' : '69'}: ${values[i] !== null ? value
 - น้ำหนัก: ${kpi.weight}
 - แหล่งข้อมูล: ${kpi.source}
 
-📈 ผลการดำเนินงานรอบที่ 1 (ต.ค.-ม.ค.):
-- ผลงานรายเดือน: ${months.slice(0, 4).map((m, i) => `${m}${i < 3 ? '68' : '69'}=${values[i] !== null ? values[i] : '-'}`).join(', ')}
-- ค่าเฉลี่ย Q1: ${q1Avg} ${kpi.unit}
+📈 ผลการดำเนินงาน (ต.ค. - ${perf.monthName} เดือนปัจจุบัน):
+- ผลงานรายเดือน: ${monthlyDetail}
+- ผลงานสะสม ณ ${perf.monthName} (${perf.count} เดือน): ${currentAvg} ${kpi.unit}
 - สถานะ: ${status === true ? 'ผ่านเกณฑ์' : status === false ? 'ไม่ผ่านเกณฑ์' : 'รอข้อมูล'}
 
 กรุณาเขียน CARD ตามโครงสร้างต่อไปนี้:
@@ -3571,10 +3610,10 @@ ${months.map((m, i) => `${m}${i < 3 ? '68' : '69'}: ${values[i] !== null ? value
             }
             
             const kpi = kpiData.find(k => k.id === parseInt(kpiId));
-            const values = monthlyData[kpi.id] || Array(12).fill(null);
-            const q1Values = values.slice(0, 4).filter(v => v !== null);
-            const q1Avg = q1Values.length > 0 ? (q1Values.reduce((a, b) => a + b, 0) / q1Values.length).toFixed(2) : '-';
-            const status = q1Avg !== '-' ? isPassed(kpi, parseFloat(q1Avg)) : null;
+            // ใช้ผลงานสะสมตั้งแต่ ต.ค. จนถึงเดือนปัจจุบัน
+            const perf = getCurrentPerformance(kpi.id);
+            const currentAvg = perf.avg;
+            const status = currentAvg !== '-' ? isPassed(kpi, parseFloat(currentAvg)) : null;
 
             // Create HTML content for Word
             const htmlContent = `
@@ -3604,8 +3643,8 @@ th { background-color: #e0f2fe; font-weight: bold; }
 
 <h3>1. Context ผลงานย้อนหลัง 3 ปี</h3>
 <table>
-<tr><th>ปีงบประมาณ</th><th>2565</th><th>2566</th><th>2567</th><th>2568</th><th>2569 รอบที่ 1</th></tr>
-<tr><td><b>ผลงาน</b></td><td></td><td></td><td></td><td></td><td><b>${q1Avg}</b></td></tr>
+<tr><th>ปีงบประมาณ</th><th>2565</th><th>2566</th><th>2567</th><th>2568</th><th>2569 ผลงาน ณ ${perf.monthName}</th></tr>
+<tr><td><b>ผลงาน</b></td><td></td><td></td><td></td><td></td><td><b>${currentAvg}</b></td></tr>
 </table>
 
 <p><b>วิเคราะห์ปัญหาที่เกิดจากการดำเนินงานในปีงบประมาณ 2568 โดยใช้ Six Building Blocks</b></p>
@@ -3625,7 +3664,7 @@ th { background-color: #e0f2fe; font-weight: bold; }
 <h3>3. Result ผลลัพธ์ที่เกิดขึ้น</h3>
 <table>
 <tr><th>เกณฑ์/เป้าหมายปีงบประมาณ 2569</th><th>ผลงานปีงบประมาณ 2569</th><th>ผลการประเมิน</th></tr>
-<tr><td>${kpi.target} ${kpi.unit}</td><td>${q1Avg} ${kpi.unit}</td><td class="${status === true ? 'pass' : 'fail'}">${status === true ? 'ผ่าน' : status === false ? 'ไม่ผ่าน' : 'รอข้อมูล'}</td></tr>
+<tr><td>${kpi.target} ${kpi.unit}</td><td>${currentAvg} ${kpi.unit}</td><td class="${status === true ? 'pass' : 'fail'}">${status === true ? 'ผ่าน' : status === false ? 'ไม่ผ่าน' : 'รอข้อมูล'}</td></tr>
 </table>
 
 <h3>4. Development สิ่งที่จะพัฒนาในปีงบประมาณ 2569</h3>
@@ -3654,7 +3693,7 @@ E-mail...............................................................<br/>
 วัน/เดือน/ปี.......................................................<br/>
 </p>
 
-<p style="color: #666; font-size: 14pt;">หมายเหตุ : การตรวจราชการ รอบที่ 1 ใช้รายงานข้อมูลผลการดำเนินงาน รอบ 4 เดือน ณ วันที่ 20 ม.ค.</p>
+<p style="color: #666; font-size: 14pt;">หมายเหตุ : ใช้รายงานข้อมูลผลการดำเนินงานสะสมตั้งแต่ ต.ค. ถึง ${perf.monthName} (${perf.count} เดือน) ณ วันที่จัดทำรายงาน</p>
 </body>
 </html>`;
 
@@ -3695,10 +3734,10 @@ E-mail...............................................................<br/>
             }
             
             const kpi = kpiData.find(k => k.id === parseInt(kpiId));
-            const values = monthlyData[kpi.id] || Array(12).fill(null);
-            const q1Values = values.slice(0, 4).filter(v => v !== null);
-            const q1Avg = q1Values.length > 0 ? (q1Values.reduce((a, b) => a + b, 0) / q1Values.length).toFixed(2) : '-';
-            const status = q1Avg !== '-' ? isPassed(kpi, parseFloat(q1Avg)) : null;
+            // ใช้ผลงานสะสมตั้งแต่ ต.ค. จนถึงเดือนปัจจุบัน
+            const perf = getCurrentPerformance(kpi.id);
+            const currentAvg = perf.avg;
+            const status = currentAvg !== '-' ? isPassed(kpi, parseFloat(currentAvg)) : null;
             const responsible = responsibleData[kpi.id] || {};
 
             // Update KPI info with responsible persons
@@ -3725,13 +3764,24 @@ E-mail...............................................................<br/>
                 </div>
             `;
 
-            // Update Q1 result
-            document.getElementById('card_result_2569_q1').textContent = q1Avg;
+            // Update current month performance
+            document.getElementById('card_result_2569_q1').textContent = currentAvg;
             document.getElementById('card_result_2569_q1').style.color = status === true ? '#16a34a' : status === false ? '#dc2626' : '#64748b';
+
+            // Update header column (เปลี่ยน "2569 รอบที่ 1" → "2569 ผลงาน ณ <เดือนปัจจุบัน>")
+            const headerCell = document.getElementById('card_result_header_current');
+            if (headerCell) {
+                headerCell.textContent = `2569 ผลงาน ณ ${perf.monthName}`;
+            }
+            // Update note ที่อยู่ท้ายฟอร์ม
+            const noteEl = document.getElementById('card_note_current');
+            if (noteEl) {
+                noteEl.textContent = `หมายเหตุ : ใช้รายงานข้อมูลผลการดำเนินงานสะสม ตั้งแต่ ต.ค. ถึง ${perf.monthName} (${perf.count} เดือน) ณ วันที่จัดทำรายงาน`;
+            }
 
             // Update Result table
             document.getElementById('card_target').textContent = kpi.target + ' ' + kpi.unit;
-            document.getElementById('card_performance').textContent = q1Avg + ' ' + kpi.unit;
+            document.getElementById('card_performance').textContent = currentAvg + ' ' + kpi.unit;
             const evalCell = document.getElementById('card_evaluation');
             if (status === true) {
                 evalCell.textContent = 'ผ่าน';
