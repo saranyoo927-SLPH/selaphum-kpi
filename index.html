@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SELAPHUM SMART KPI (ระบบบริหารตัวชี้วัดแผนยุทธศาสตร์สุขภาพอัจฉริยะ อำเภอเสลภูมิ)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
@@ -1782,8 +1783,8 @@
                         <button class="btn btn-success" onclick="generateCARDPrompt()" style="white-space: nowrap;">
                             🤖 AI ช่วยเขียน
                         </button>
-                        <button class="btn btn-primary" onclick="exportCARDWord()" style="white-space: nowrap;">
-                            📄 Export Word
+                        <button class="btn btn-primary" onclick="exportCARDImage()" style="white-space: nowrap;">
+                            📸 Export PNG
                         </button>
                     </div>
                 </div>
@@ -2452,7 +2453,7 @@ const kpiData = [
             return m >= 10 ? m - 10 : m + 2;
         }
 
-        // คำนวณผลงานสะสมเฉลี่ยตั้งแต่ ต.ค. จนถึงเดือนปัจจุบัน
+        // ผลงาน ณ เดือนปัจจุบัน (ใช้ค่าล่าสุดที่มีข้อมูล — สอดคล้องกับเมนูรายงาน)
         // คืน { avg: string, count: number, monthIndex: number, monthName: string, values: array }
         function getCurrentPerformance(kpiId) {
             const values = monthlyData[kpiId] || Array(12).fill(null);
@@ -2460,11 +2461,19 @@ const kpiData = [
             // ตัดข้อมูลตั้งแต่ ต.ค. (index 0) จนถึงเดือนปัจจุบัน (รวม)
             const sliced = values.slice(0, idx + 1);
             const valid = sliced.filter(v => v !== null && v !== undefined && v !== '');
-            // *** เปลี่ยนเป็นใช้ค่าล่าสุดเหมือน renderReportTable ***
-            const avg = valid.length > 0 ? valid[valid.length - 1].toFixed(2) : '-';
+            // ใช้ค่าล่าสุดที่มีข้อมูล (เหมือนกับเมนูรายงาน) แทนการเฉลี่ย
+            const avg = valid.length > 0
+                ? Number(valid[valid.length - 1]).toFixed(2)
+                : '-';
+            return {
+                avg: avg,
+                count: valid.length,
+                monthIndex: idx,
+                monthName: months[idx],
+                values: sliced
+            };
+        }
 
-            return { avg, count: valid.length, monthIndex: idx, monthName: months[idx], values: sliced };
-}
         // Charts
         let pieChart, barChart;
 
@@ -3520,11 +3529,33 @@ ${months.map((m, i) => `${m}${i < 3 ? '68' : '69'}: ${values[i] !== null ? value
             const status = currentAvg !== '-' ? isPassed(kpi, parseFloat(currentAvg)) : null;
 
             // สร้างรายการผลงานรายเดือน (ต.ค. ถึงเดือนปัจจุบัน)
-            // ปีงบประมาณ 2569: ต.ค.-ธ.ค. = ปี 68, ม.ค.-ก.ย. = ปี 69
             const monthlyDetail = months.slice(0, perf.monthIndex + 1).map((m, i) => {
                 const yr = i < 3 ? '68' : '69';
                 return `${m}${yr}=${values[i] !== null && values[i] !== undefined ? values[i] : '-'}`;
             }).join(', ');
+
+            // ดึงข้อมูลย้อนหลัง 4 ปีจาก CARD form (ถ้ากรอกไว้)
+            const hist2565 = (document.getElementById('card_result_2565').value || '-').trim();
+            const hist2566 = (document.getElementById('card_result_2566').value || '-').trim();
+            const hist2567 = (document.getElementById('card_result_2567').value || '-').trim();
+            const hist2568 = (document.getElementById('card_result_2568').value || '-').trim();
+            const historyLine = `2565=${hist2565}, 2566=${hist2566}, 2567=${hist2567}, 2568=${hist2568}, 2569(ปัจจุบัน)=${currentAvg}`;
+
+            // วิเคราะห์แนวโน้มเบื้องต้น
+            const histVals = [hist2565, hist2566, hist2567, hist2568, currentAvg]
+                .map(v => parseFloat(v))
+                .filter(v => !isNaN(v));
+            let trendDesc = 'ไม่มีข้อมูลเพียงพอสำหรับวิเคราะห์แนวโน้ม';
+            if (histVals.length >= 2) {
+                const diff = histVals[histVals.length - 1] - histVals[0];
+                const pct = Math.abs(diff).toFixed(2);
+                if (Math.abs(diff) < 0.5) trendDesc = 'แนวโน้มทรงตัว (เปลี่ยนแปลงน้อยมาก)';
+                else if (kpi.lowerIsBetter) {
+                    trendDesc = diff < 0 ? `แนวโน้มดีขึ้น (ลดลง ${pct} ${kpi.unit} จากปี 2565)` : `แนวโน้มแย่ลง (เพิ่มขึ้น ${pct} ${kpi.unit} จากปี 2565)`;
+                } else {
+                    trendDesc = diff > 0 ? `แนวโน้มดีขึ้น (เพิ่มขึ้น ${pct} ${kpi.unit} จากปี 2565)` : `แนวโน้มแย่ลง (ลดลง ${pct} ${kpi.unit} จากปี 2565)`;
+                }
+            }
 
             const prompt = `คุณเป็นผู้เชี่ยวชาญด้านการวิเคราะห์ CARD (Context-Action-Result-Development) สำหรับการตรวจราชการด้านสาธารณสุข
 
@@ -3538,44 +3569,83 @@ ${months.map((m, i) => `${m}${i < 3 ? '68' : '69'}: ${values[i] !== null ? value
 - น้ำหนัก: ${kpi.weight}
 - แหล่งข้อมูล: ${kpi.source}
 
-📈 ผลการดำเนินงาน (ต.ค. - ${perf.monthName} เดือนปัจจุบัน):
+📅 ผลงานย้อนหลัง 5 ปี (2565–2569):
+- ${historyLine}
+- ${trendDesc}
+
+📈 ผลการดำเนินงานปี 2569 รายเดือน (ต.ค. - ${perf.monthName}):
 - ผลงานรายเดือน: ${monthlyDetail}
-- ผลงานสะสม ณ ${perf.monthName} (${perf.count} เดือน): ${currentAvg} ${kpi.unit}
+- ผลงาน ณ ${perf.monthName}: ${currentAvg} ${kpi.unit}
 - สถานะ: ${status === true ? 'ผ่านเกณฑ์' : status === false ? 'ไม่ผ่านเกณฑ์' : 'รอข้อมูล'}
 
-กรุณาเขียน CARD ตามโครงสร้างต่อไปนี้:
+กรุณาเขียนเนื้อหา CARD ตามโครงสร้างต่อไปนี้ (รูปแบบสไลด์นำเสนอ 1 หน้า A4 แนวนอน):
 
-**1. Context (บริบท/สถานการณ์)**
-- วิเคราะห์ปัญหาโดยใช้ Six Building Blocks:
-  1) Service Delivery (การให้บริการสุขภาพ)
-  2) Health Workforce (กำลังคนด้านสุขภาพ)
-  3) Health Information Systems (ระบบข้อมูลสุขภาพ)
-  4) Access to Essential Medicines (การเข้าถึงยาและเวชภัณฑ์ที่จำเป็น)
-  5) Health Financing (การเงินการคลังด้านสุขภาพ)
-  6) Leadership/Governance (การบริหารจัดการ/ธรรมาภิบาล)
+════════════════════════════════════════
+📌 หัวสไลด์
+════════════════════════════════════════
+- เครือข่ายบริการสุขภาพ อำเภอเสลภูมิ
+- ยุทธศาสตร์: ${strategyNames[kpi.strategy]}
+- ตัวชี้วัดที่ ${kpi.id}: ${kpi.name}
 
-**2. Action (กิจกรรม/การดำเนินงาน)**
-- ระบุกิจกรรมที่ดำเนินการแก้ไขปัญหา
-- วิธีการดำเนินงานที่ใช้
+════════════════════════════════════════
+🔵 Context (บริบท/สถานการณ์)
+════════════════════════════════════════
+**ส่วนที่ 1 — แนวโน้มผลงานย้อนหลัง (2565–2569)**
+อธิบายแนวโน้มจากข้อมูล: ${historyLine}
+(${trendDesc}) เปรียบเทียบกับเป้าหมาย ${kpi.target} ${kpi.unit}
+เขียนเป็น 2–3 ประโยค บรรยายทิศทางตัวเลขและนัยสำคัญ
 
-**3. Result (ผลลัพธ์)**
-- เปรียบเทียบเป้าหมายกับผลงาน
-- วิเคราะห์สาเหตุที่${status === true ? 'ผ่าน' : 'ไม่ผ่าน'}เกณฑ์
+**ส่วนที่ 2 — Six Building Blocks Analysis**
+ระบุปัญหาสำคัญ 1–2 ประเด็นต่อด้าน (เขียนกระชับ เน้น bullet สั้น):
+• SERVICE DELIVERY (การให้บริการ): ...
+• HEALTH WORKFORCE (กำลังคน): ...
+• HEALTH INFORMATION SYSTEMS (ระบบข้อมูล): ...
+• ACCESS TO MEDICINES (ยาและเวชภัณฑ์): ...
+• HEALTH FINANCING (การเงิน): ...
+• LEADERSHIP/GOVERNANCE (การบริหาร): ...
 
-**4. Development (การพัฒนา)**
-- สิ่งที่จะพัฒนาต่อในปี 2569
+════════════════════════════════════════
+🟢 Action (กิจกรรม/การดำเนินงาน)
+════════════════════════════════════════
+ระบุกิจกรรมหลัก 6 ข้อ (แต่ละข้อ 1 บรรทัด กระชับ เน้น action word)
+1. ...
+2. ...
+3. ...
+4. ...
+5. ...
+6. ...
 
-**5. นวัตกรรม/ผลงานเด่น (Best Practice)** (ถ้ามี)
+════════════════════════════════════════
+🟡 Result (ผลลัพธ์)
+════════════════════════════════════════
+| ผลงาน (ณ ${perf.monthName}) | เป้าหมาย | ผลการประเมิน |
+| ${currentAvg} ${kpi.unit} | ${kpi.target} ${kpi.unit} | ${status === true ? '✅ ผ่านเกณฑ์' : status === false ? '❌ ไม่ผ่านเกณฑ์' : '⏳ รอข้อมูล'} |
 
-**6. ปัจจัยแห่งความสำเร็จ**
+วิเคราะห์สาเหตุสำคัญที่ทำให้${status === true ? 'ผ่าน' : 'ไม่ผ่าน'}เกณฑ์ (2–3 ข้อ bullet กระชับ)
 
-**7. ปัญหาและอุปสรรค**
+════════════════════════════════════════
+🔴 Development (การพัฒนาต่อยอด)
+════════════════════════════════════════
+ระบุแนวทางพัฒนา/แก้ไขในปี 2569 จำนวน 4–6 ข้อ (bullet กระชับ action-oriented)
+• ...
+• ...
+• ...
+• ...
 
-**8. ข้อเสนอเชิงนโยบาย**
+════════════════════════════════════════
+📋 ส่วนเพิ่มเติม (สำหรับ Word/เอกสารแนบ)
+════════════════════════════════════════
+**นวัตกรรม/Best Practice** (ถ้ามี): ...
+**ปัจจัยแห่งความสำเร็จ**: ...
+**ปัญหาและอุปสรรค**: ...
+**ข้อเสนอเชิงนโยบาย**: ...
+**สิ่งที่ต้องการสนับสนุน**: ...
 
-**9. สิ่งที่ต้องการสนับสนุน**
-
-หมายเหตุ: กรุณาเขียนเนื้อหาที่สมจริง เหมาะสมกับบริบทของโรงพยาบาลชุมชนในภาคอีสาน และสอดคล้องกับระบบสาธารณสุขไทย`;
+⚠️ คำแนะนำในการเขียน:
+- เนื้อหาต้องสมจริง เหมาะกับโรงพยาบาลชุมชนในภาคอีสาน
+- Six Building Blocks ให้วิเคราะห์เฉพาะด้านที่มีปัญหาจริง ด้านที่ไม่มีปัญหาเขียนว่า "ไม่พบปัญหาสำคัญ"
+- Action ต้องสอดคล้องกับปัญหาใน Context โดยตรง
+- Development ต้องต่อยอดจาก Action ที่ดำเนินการแล้ว`;
 
             document.getElementById('cardPromptText').value = prompt;
             document.getElementById('cardAISection').style.display = 'block';
@@ -3595,109 +3665,270 @@ ${months.map((m, i) => `${m}${i < 3 ? '68' : '69'}: ${values[i] !== null ? value
         }
 
         // Export CARD to Word
-        function exportCARDWord() {
+        async function exportCARDImage() {
             const kpiId = document.getElementById('cardKPISelect').value;
-            if (!kpiId) {
-                showToast('กรุณาเลือกตัวชี้วัดก่อน', 'error');
-                return;
-            }
-            
+            if (!kpiId) { showToast('กรุณาเลือกตัวชี้วัดก่อน', 'error'); return; }
+
+            showToast('⏳ กำลังสร้างภาพ กรุณารอสักครู่...', 'info');
+
             const kpi = kpiData.find(k => k.id === parseInt(kpiId));
-            // ใช้ผลงานสะสมตั้งแต่ ต.ค. จนถึงเดือนปัจจุบัน
             const perf = getCurrentPerformance(kpi.id);
             const currentAvg = perf.avg;
             const status = currentAvg !== '-' ? isPassed(kpi, parseFloat(currentAvg)) : null;
 
-            // Create HTML content for Word
-            const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
+            // ดึงข้อมูลจาก CARD form
+            const w2565 = (document.getElementById('card_result_2565').value || '-').trim();
+            const w2566 = (document.getElementById('card_result_2566').value || '-').trim();
+            const w2567 = (document.getElementById('card_result_2567').value || '-').trim();
+            const w2568 = (document.getElementById('card_result_2568').value || '-').trim();
+            const block1 = (document.getElementById('card_block_1').value || '—').trim();
+            const block2 = (document.getElementById('card_block_2').value || '—').trim();
+            const block3 = (document.getElementById('card_block_3').value || '—').trim();
+            const block4 = (document.getElementById('card_block_4').value || '—').trim();
+            const block5 = (document.getElementById('card_block_5').value || '—').trim();
+            const block6 = (document.getElementById('card_block_6').value || '—').trim();
+            const actionText = (document.getElementById('card_action').value || '').trim();
+            const devText = (document.getElementById('card_development') ? document.getElementById('card_development').value : '').trim();
+            const reporter = (document.getElementById('card_reporter') ? document.getElementById('card_reporter').value : '').trim();
+
+            // Action lines → numbered items
+            const actionLines = actionText ? actionText.split('\n').filter(l => l.trim()) : ['(ยังไม่ได้กรอกข้อมูล)'];
+            const actionHTML = actionLines.map((line, i) =>
+                `<div class="ci-action-item"><span class="ci-action-num">${i+1}</span><span>${line.replace(/^[-•]\s*/,'')}</span></div>`
+            ).join('');
+
+            // Dev lines → bullet list
+            const devLines = devText ? devText.split('\n').filter(l => l.trim()) : ['(ยังไม่ได้กรอกข้อมูล)'];
+            const devHTML = devLines.map(l =>
+                `<div class="ci-dev-item">• ${l.replace(/^[-•]\s*/,'')}</div>`
+            ).join('');
+
+            // ตารางย้อนหลัง
+            const histYears = ['2565','2566','2567','2568',`2569<br/>(${perf.monthName})`];
+            const histVals  = [w2565, w2566, w2567, w2568, currentAvg];
+            const histHeaderCells = histYears.map(y => `<th>${y}</th>`).join('');
+            const histValCells    = histVals.map((v, i) =>
+                `<td${i===4?' class="ci-hist-current"':''}>${v}</td>`
+            ).join('');
+
+            // Six blocks rows
+            const blockLabels = ['SERVICE DELIVERY<br><small>(การให้บริการ)</small>',
+                                 'HEALTH WORKFORCE<br><small>(กำลังคน)</small>',
+                                 'HEALTH INFORMATION<br><small>(ระบบข้อมูล)</small>',
+                                 'MEDICINES ACCESS<br><small>(ยาและเวชภัณฑ์)</small>',
+                                 'HEALTH FINANCING<br><small>(การเงิน)</small>',
+                                 'LEADERSHIP/GOVERNANCE<br><small>(การบริหาร)</small>'];
+            const blockVals  = [block1,block2,block3,block4,block5,block6];
+            const blocksRows = blockLabels.map((lbl, i) =>
+                `<tr><td class="ci-block-label">${lbl}</td><td class="ci-block-val">${blockVals[i]}</td></tr>`
+            ).join('');
+
+            // Result badge
+            const resultBadgeClass = status === true ? 'ci-badge-pass' : status === false ? 'ci-badge-fail' : 'ci-badge-wait';
+            const resultBadgeText  = status === true ? '✓ ผ่านเกณฑ์' : status === false ? '✗ ไม่ผ่านเกณฑ์' : '— รอข้อมูล';
+
+            // สร้าง slide div
+            const slide = document.createElement('div');
+            slide.id = 'card-export-slide';
+            slide.innerHTML = `
 <style>
-body { font-family: 'TH Sarabun New', 'Sarabun', sans-serif; font-size: 16pt; line-height: 1.5; }
-h1 { font-size: 18pt; font-weight: bold; text-align: center; color: #1e40af; }
-h2 { font-size: 16pt; font-weight: bold; text-align: center; color: #1e40af; margin-bottom: 20pt; }
-h3 { font-size: 16pt; font-weight: bold; margin-top: 16pt; }
-table { width: 100%; border-collapse: collapse; margin: 10pt 0; }
-th, td { border: 1px solid #000; padding: 6pt 10pt; }
-th { background-color: #e0f2fe; font-weight: bold; }
-.pass { color: green; font-weight: bold; }
-.fail { color: red; font-weight: bold; }
-.fill-area { background-color: #f8f8f8; min-height: 50pt; padding: 8pt; }
+  #card-export-slide {
+    width: 1240px; height: 700px;
+    background: #f0f4f8;
+    font-family: 'Sarabun', 'TH Sarabun New', sans-serif;
+    font-size: 13px; line-height: 1.45;
+    box-sizing: border-box; overflow: hidden;
+    display: flex; flex-direction: column;
+    border-radius: 10px;
+  }
+  /* ===== HEADER ===== */
+  .ci-header {
+    background: linear-gradient(90deg, #0d47a1 0%, #1976d2 60%, #1e88e5 100%);
+    color: white; padding: 10px 18px;
+    display: flex; align-items: center; gap: 14px;
+    border-radius: 10px 10px 0 0;
+    flex-shrink: 0;
+  }
+  .ci-logo-box {
+    background: white; border-radius: 50%;
+    width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .ci-header-org { font-size: 11px; opacity: .8; }
+  .ci-strategy-badge {
+    background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35);
+    border-radius: 6px; padding: 3px 10px;
+    font-size: 13px; font-weight: 700; white-space: nowrap;
+  }
+  .ci-header-kpi { flex: 1; font-size: 13px; font-weight: 700; }
+  .ci-header-sub { font-size: 11px; font-weight: 400; opacity: .85; margin-top: 2px; }
+  /* ===== BODY GRID ===== */
+  .ci-body { display: flex; gap: 8px; padding: 8px 10px 6px; flex: 1; overflow: hidden; }
+  .ci-col { display: flex; flex-direction: column; gap: 7px; }
+  .ci-col-left  { flex: 0 0 51%; }
+  .ci-col-right { flex: 0 0 47%; }
+  /* ===== SECTION BOXES ===== */
+  .ci-box {
+    background: white; border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    padding: 8px 10px; overflow: hidden;
+  }
+  .ci-sec-title { font-size: 18px; font-weight: 800; margin-bottom: 5px; }
+  .ci-context  .ci-sec-title { color: #0d47a1; }
+  .ci-action   .ci-sec-title { color: #1b5e20; }
+  .ci-result   .ci-sec-title { color: #e65100; }
+  .ci-develop  .ci-sec-title { color: #b71c1c; }
+  /* ===== HISTORY TABLE ===== */
+  .ci-hist-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 5px; }
+  .ci-hist-table th { background: #1565c0; color: white; padding: 3px 5px; text-align: center; }
+  .ci-hist-table td { border: 1px solid #ccc; padding: 3px 5px; text-align: center; }
+  .ci-hist-current { font-weight: 700; color: #1565c0; background: #e3f2fd; }
+  /* ===== SIX BLOCKS TABLE ===== */
+  .ci-blocks-title { font-size: 11.5px; font-weight: 700; color: #0d47a1; margin: 4px 0 3px; }
+  .ci-blocks-table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+  .ci-block-label { background: #e3f2fd; font-weight: 700; width: 36%; border: 1px solid #ccc; padding: 2.5px 5px; vertical-align: top; }
+  .ci-block-label small { font-weight: 400; }
+  .ci-block-val   { border: 1px solid #ccc; padding: 2.5px 5px; vertical-align: top; }
+  /* ===== RESULT ===== */
+  .ci-result-grid { display: flex; gap: 6px; align-items: stretch; }
+  .ci-result-cell {
+    flex: 1; text-align: center; border: 1px solid #ccc; border-radius: 6px;
+    padding: 6px 4px;
+  }
+  .ci-result-label { font-size: 10px; color: #666; margin-bottom: 2px; }
+  .ci-result-value { font-size: 22px; font-weight: 800; line-height: 1.1; }
+  .ci-badge-pass { color: #2e7d32; }
+  .ci-badge-fail { color: #c62828; }
+  .ci-badge-wait { color: #78909c; }
+  .ci-result-icon { font-size: 18px; }
+  /* ===== ACTION ===== */
+  .ci-action-item {
+    display: flex; align-items: flex-start; gap: 7px;
+    padding: 3px 0; font-size: 12px; border-bottom: 1px dashed #e0e0e0;
+  }
+  .ci-action-item:last-child { border-bottom: none; }
+  .ci-action-num {
+    background: #1b5e20; color: white; border-radius: 50%;
+    width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+  }
+  /* ===== DEVELOPMENT ===== */
+  .ci-dev-item { font-size: 12px; padding: 2px 0; color: #1a1a2e; }
+  /* ===== FOOTER ===== */
+  .ci-footer {
+    background: #e8edf4; border-top: 1px solid #c5d0e0;
+    padding: 5px 14px; font-size: 11px; color: #555;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0; border-radius: 0 0 10px 10px;
+  }
 </style>
-</head>
-<body>
-<h1>Template การวิเคราะห์ CARD การรับนิเทศ/ตรวจราชการ รอบที่ 1</h1>
-<h2>ปีงบประมาณ 2569 คปสอ.เสลภูมิ</h2>
 
-<h3>ตัวชี้วัดที่ ${kpi.id}: ${kpi.name}</h3>
-<p>ยุทธศาสตร์: ${strategyNames[kpi.strategy]} | แผนงาน: ${kpi.plan} | เป้าหมาย: ${kpi.target} ${kpi.unit}</p>
+<!-- HEADER -->
+<div class="ci-header">
+  <div class="ci-logo-box">🏥</div>
+  <div>
+    <div class="ci-header-org">เครือข่ายบริการสุขภาพ อำเภอเสลภูมิ จังหวัดร้อยเอ็ด</div>
+    <div class="ci-strategy-badge">${strategyNames[kpi.strategy]}</div>
+  </div>
+  <div class="ci-header-kpi">
+    ตัวชี้วัดที่ ${kpi.id}: ${kpi.name}
+    <div class="ci-header-sub">เป้าหมาย: ${kpi.target} ${kpi.unit} &nbsp;|&nbsp; น้ำหนัก: ${kpi.weight} &nbsp;|&nbsp; แหล่งข้อมูล: ${kpi.source}</div>
+  </div>
+</div>
 
-<h3>1. Context ผลงานย้อนหลัง 3 ปี</h3>
-<table>
-<tr><th>ปีงบประมาณ</th><th>2565</th><th>2566</th><th>2567</th><th>2568</th><th>2569 ผลงาน ณ ${perf.monthName}</th></tr>
-<tr><td><b>ผลงาน</b></td><td></td><td></td><td></td><td></td><td><b>${currentAvg}</b></td></tr>
-</table>
+<!-- BODY -->
+<div class="ci-body">
 
-<p><b>วิเคราะห์ปัญหาที่เกิดจากการดำเนินงานในปีงบประมาณ 2568 โดยใช้ Six Building Blocks</b></p>
-<table>
-<tr><th style="width:35%">ด้าน</th><th>วิเคราะห์ปัญหา</th></tr>
-<tr><td>1. Service Delivery (การให้บริการสุขภาพ)</td><td></td></tr>
-<tr><td>2. Health Workforce (กำลังคนด้านสุขภาพ)</td><td></td></tr>
-<tr><td>3. Health Information Systems (ระบบข้อมูลสุขภาพ)</td><td></td></tr>
-<tr><td>4. Access to Essential Medicines (การเข้าถึงยาและเวชภัณฑ์)</td><td></td></tr>
-<tr><td>5. Health Financing (การเงินการคลังด้านสุขภาพ)</td><td></td></tr>
-<tr><td>6. Leadership/Governance (การบริหารจัดการ/ธรรมาภิบาล)</td><td></td></tr>
-</table>
+  <!-- LEFT -->
+  <div class="ci-col ci-col-left">
 
-<h3>2. Action กิจกรรม/วิธีดำเนินงาน</h3>
-<div class="fill-area">กิจกรรม/วิธีดำเนินงาน เพื่อแก้ไขปัญหาที่เกิดจากการวิเคราะห์ Context</div>
+    <!-- CONTEXT -->
+    <div class="ci-box ci-context">
+      <div class="ci-sec-title">Context :</div>
+      <table class="ci-hist-table">
+        <tr><th>ปีงบประมาณ</th>${histHeaderCells}</tr>
+        <tr><td><b>ผลงาน</b></td>${histValCells}</tr>
+        <tr><td><b>เป้าหมาย</b></td><td>—</td><td>—</td><td>—</td><td>—</td><td class="ci-hist-current">${kpi.target} ${kpi.unit}</td></tr>
+      </table>
+      <div class="ci-blocks-title">Six Building Blocks Analysis :</div>
+      <table class="ci-blocks-table">
+        ${blocksRows}
+      </table>
+    </div>
 
-<h3>3. Result ผลลัพธ์ที่เกิดขึ้น</h3>
-<table>
-<tr><th>เกณฑ์/เป้าหมายปีงบประมาณ 2569</th><th>ผลงานปีงบประมาณ 2569</th><th>ผลการประเมิน</th></tr>
-<tr><td>${kpi.target} ${kpi.unit}</td><td>${currentAvg} ${kpi.unit}</td><td class="${status === true ? 'pass' : 'fail'}">${status === true ? 'ผ่าน' : status === false ? 'ไม่ผ่าน' : 'รอข้อมูล'}</td></tr>
-</table>
+    <!-- RESULT -->
+    <div class="ci-box ci-result">
+      <div class="ci-sec-title">Result :</div>
+      <div class="ci-result-grid">
+        <div class="ci-result-cell">
+          <div class="ci-result-label">ผลงาน (${perf.monthName})</div>
+          <div class="ci-result-value" style="color:#1565c0;">${currentAvg}<span style="font-size:13px;font-weight:500;"> ${kpi.unit}</span></div>
+        </div>
+        <div class="ci-result-cell">
+          <div class="ci-result-label">เป้าหมาย</div>
+          <div class="ci-result-value" style="color:#37474f;">${kpi.target}<span style="font-size:13px;font-weight:500;"> ${kpi.unit}</span></div>
+        </div>
+        <div class="ci-result-cell">
+          <div class="ci-result-label">ผลการประเมิน</div>
+          <div class="ci-result-value ${resultBadgeClass}">${resultBadgeText}</div>
+        </div>
+      </div>
+    </div>
 
-<h3>4. Development สิ่งที่จะพัฒนาในปีงบประมาณ 2569</h3>
-<div class="fill-area"></div>
+  </div><!-- /left -->
 
-<h3>5. นวัตกรรม/ผลงานเด่น (Best Practice) (ถ้ามี)</h3>
-<div class="fill-area"></div>
+  <!-- RIGHT -->
+  <div class="ci-col ci-col-right">
 
-<h3>6. ปัจจัยแห่งความสำเร็จ</h3>
-<div class="fill-area"></div>
+    <!-- ACTION -->
+    <div class="ci-box ci-action" style="flex:1;">
+      <div class="ci-sec-title">Action :</div>
+      ${actionHTML}
+    </div>
 
-<h3>7. ปัญหาและอุปสรรค/จุดร่วมที่สะท้อนปัญหาหรือความเสี่ยงต่อความไม่สำเร็จของงาน</h3>
-<div class="fill-area"></div>
+    <!-- DEVELOPMENT -->
+    <div class="ci-box ci-develop" style="flex:1;">
+      <div class="ci-sec-title">Development :</div>
+      ${devHTML}
+    </div>
 
-<h3>8. ข้อเสนอเชิงนโยบาย/ข้อเสนอเพื่อปรับปรุงพัฒนา</h3>
-<div class="fill-area"></div>
+  </div><!-- /right -->
 
-<h3>9. สิ่งที่ต้องการสนับสนุนจากผู้ทำหน้าที่ตรวจราชการและนิเทศงาน และส่วนกลาง</h3>
-<div class="fill-area"></div>
+</div><!-- /body -->
 
-<p style="margin-top: 30pt;">
-ผู้รายงาน............................................................<br/>
-ตำแหน่ง/หน่วยงาน.............................................<br/>
-เบอร์ติดต่อ.........................................................<br/>
-E-mail...............................................................<br/>
-วัน/เดือน/ปี.......................................................<br/>
-</p>
+<!-- FOOTER -->
+<div class="ci-footer">
+  <span>ผู้รายงาน: <b>${reporter || '—'}</b></span>
+  <span>CARD การรับนิเทศ/ตรวจราชการ รอบที่ 1 &nbsp;|&nbsp; ปีงบประมาณ 2569 &nbsp;|&nbsp; คปสอ.เสลภูมิ</span>
+  <span>ข้อมูล ณ ${perf.monthName} 2569</span>
+</div>
+`;
 
-<p style="color: #666; font-size: 14pt;">หมายเหตุ : ใช้รายงานข้อมูลผลการดำเนินงานสะสมตั้งแต่ ต.ค. ถึง ${perf.monthName} (${perf.count} เดือน) ณ วันที่จัดทำรายงาน</p>
-</body>
-</html>`;
+            // mount ไว้นอกจอ render แล้วยิง html2canvas
+            slide.style.cssText = 'position:fixed;top:-9999px;left:-9999px;z-index:-1;';
+            document.body.appendChild(slide);
 
-            // Create blob and download
-            const blob = new Blob([htmlContent], { type: 'application/msword' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `CARD_KPI${kpi.id}_${kpi.name.substring(0, 30).replace(/[^a-zA-Z0-9ก-๙]/g, '_')}.doc`;
-            link.click();
-            
-            showToast('ดาวน์โหลดไฟล์ Word เรียบร้อยแล้ว', 'success');
+            try {
+                const canvas = await html2canvas(slide, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#f0f4f8',
+                    width: 1240,
+                    height: 700,
+                    windowWidth: 1240,
+                    windowHeight: 700
+                });
+                const link = document.createElement('a');
+                link.download = `CARD_KPI${kpi.id}_${kpi.name.substring(0,30).replace(/[^a-zA-Z0-9ก-๙]/g,'_')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast('✅ ดาวน์โหลดภาพ PNG เรียบร้อยแล้ว', 'success');
+            } catch(e) {
+                showToast('❌ เกิดข้อผิดพลาด: ' + e.message, 'error');
+            } finally {
+                document.body.removeChild(slide);
+            }
         }
 
         // CARD Data Storage
