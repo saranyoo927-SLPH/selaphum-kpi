@@ -2460,18 +2460,11 @@ const kpiData = [
             // ตัดข้อมูลตั้งแต่ ต.ค. (index 0) จนถึงเดือนปัจจุบัน (รวม)
             const sliced = values.slice(0, idx + 1);
             const valid = sliced.filter(v => v !== null && v !== undefined && v !== '');
-            const avg = valid.length > 0
-                ? (valid.reduce((a, b) => a + Number(b), 0) / valid.length).toFixed(2)
-                : '-';
-            return {
-                avg: avg,
-                count: valid.length,
-                monthIndex: idx,
-                monthName: months[idx],
-                values: sliced
-            };
-        }
+            // *** เปลี่ยนเป็นใช้ค่าล่าสุดเหมือน renderReportTable ***
+            const avg = valid.length > 0 ? valid[valid.length - 1].toFixed(2) : '-';
 
+            return { avg, count: valid.length, monthIndex: idx, monthName: months[idx], values: sliced };
+}
         // Charts
         let pieChart, barChart;
 
